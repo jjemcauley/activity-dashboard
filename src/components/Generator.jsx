@@ -1,9 +1,15 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { getDistance, shortName } from "../utils/parsers.js";
+import {
+  getCellColors,
+  SIM_GROUP_COLORS,
+  getSimColor,
+  DAY_COLORS,
+} from "../constants/colors.js";
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // CONFIGURATION
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 const CONFIG = {
   // Position multipliers (applied to activity value)
@@ -28,11 +34,11 @@ const CONFIG = {
   GREEDY_RETRIES: 50,
 };
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // ZONE MAPPING — groups activities by physical area
 // Walk distances between zones are more reliable than individual
 // activity distances since the hill distorts straight-line meters.
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 const ZONE_MAP = {
   "Team Building Games (Music Hall)": "MainCamp",
@@ -63,9 +69,9 @@ function getZone(activityName) {
   return ZONE_MAP[activityName] || "Unknown";
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // SCORING FUNCTIONS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 /**
  * Position multiplier — only boosts LAST slot of day and schedule.
@@ -92,7 +98,7 @@ function getPositionMultiplier(slotIdx, totalSlots, daySlices) {
 /**
  * Similarity decay — returns a multiplier [0..1] based on how many
  * activities from the same similarity group are already in this row.
- * 
+ *
  * 1st from group = 1.0 (full value)
  * 2nd from group = 0.5
  * 3rd+ from group = 0.25
@@ -171,9 +177,9 @@ function scoreCandidate(
   return (baseValue * posMult * simDecay) - walkPen;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // HARD CONSTRAINTS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 /**
  * Check if placing an activity violates the HARD adjacency constraint.
@@ -193,18 +199,18 @@ function violatesAdjacency(activity, slotIdx, rowAssignments, similarities, dayS
   return prev.similarityGroup === activity.similarityGroup;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // LATIN SQUARE GENERATION
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 /**
  * Generate a single Latin square rotation.
- * 
+ *
  * Algorithm: Row-by-row greedy with hard adjacency constraint.
  * For each cell, pick the highest-scoring valid candidate that doesn't
  * violate adjacency. If no non-adjacent candidate exists, relax the
  * constraint (rare, only when a similarity group dominates the pool).
- * 
+ *
  * If a row can't be filled, retry with shuffled candidate ordering
  * (controlled randomness breaks greedy local optima).
  */
@@ -267,7 +273,7 @@ function generateRotation(
         }
 
         // Score candidates and separate into adjacent-OK and adjacent-violating
-        // For rotations > 0, add score noise (Â±15) to explore different solutions
+        // For rotations > 0, add score noise (±15) to explore different solutions
         const noiseAmt = seed > 0 ? 15 : 0;
         const scored = candidates.map((act, idx) => ({
           activity: act,
@@ -352,9 +358,9 @@ function generateRelaxed(pool, n, daySlices, distMatrix, nameMap, similarities) 
   return postProcessAntiAdjacency(matrix, similarities, daySlices);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // POST-PROCESSING: Break remaining adjacencies via within-row swaps
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 function countRowAdjacencies(row, similarities, daySlices) {
   if (!similarities) return 0;
@@ -435,9 +441,9 @@ function postProcessAntiAdjacency(matrix, similarities, daySlices) {
   return result;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // STATISTICS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 function computeStats(matrix, daySlices, distMatrix, nameMap, similarities) {
   if (!matrix) return null;
@@ -503,9 +509,9 @@ function computeStats(matrix, daySlices, distMatrix, nameMap, similarities) {
   };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // LATIN SQUARE VALIDATION
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 function validateLatinSquare(matrix) {
   if (!matrix?.length) return { valid: false, issues: ["No matrix"] };
@@ -540,49 +546,9 @@ function validateLatinSquare(matrix) {
   return { valid: issues.length === 0, issues };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// COLOR UTILITIES
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-const VALUE_COLORS = [
-  { min: 90, bg: "#064e3b", text: "#6ee7b7" },
-  { min: 70, bg: "#1e3a2f", text: "#86efac" },
-  { min: 50, bg: "#1a2332", text: "#93c5fd" },
-  { min: 30, bg: "#27242e", text: "#c4b5fd" },
-  { min: 0,  bg: "#1f1f24", text: "#a1a1aa" },
-];
-
-function getCellColors(value) {
-  for (const vc of VALUE_COLORS) {
-    if (value >= vc.min) return vc;
-  }
-  return VALUE_COLORS[VALUE_COLORS.length - 1];
-}
-
-const SIM_GROUP_COLORS = {
-  "Courage / Arial": "#ef4444",
-  "Precision": "#f97316",
-  "Racquet": "#eab308",
-  "Skateboards": "#22c55e",
-  "Lesuire Sport": "#06b6d4",
-  "Auxilary": "#8b5cf6",
-};
-
-function getSimColor(group) {
-  return SIM_GROUP_COLORS[group] || "#6b7280";
-}
-
-const DAY_COLORS = {
-  Monday: "#f59e0b",
-  Tuesday: "#3b82f6",
-  Wednesday: "#10b981",
-  Thursday: "#8b5cf6",
-  Friday: "#ef4444",
-};
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 // REACT COMPONENT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═════════════════════════════════════════════════════════════════════
 
 export default function Generator({
   registry,
@@ -671,89 +637,14 @@ export default function Generator({
     [daySlices]
   );
 
-  // --- STYLES ---
-  const S = {
-    page: {
-      minHeight: "100vh",
-      background: "#0a0d13",
-      color: "#d4d4d8",
-      fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-    },
-    toolbar: {
-      padding: "14px 28px",
-      background: "#10141c",
-      borderBottom: "1px solid #1c2233",
-      display: "flex",
-      gap: 16,
-      alignItems: "center",
-      flexWrap: "wrap",
-    },
-    label: {
-      fontSize: 10,
-      color: "#71717a",
-      textTransform: "uppercase",
-      letterSpacing: "0.08em",
-      fontWeight: 600,
-    },
-    input: {
-      background: "#1c2233",
-      border: "1px solid #2a3348",
-      borderRadius: 6,
-      color: "#e4e4e7",
-      padding: "6px 10px",
-      fontSize: 13,
-      fontFamily: "'DM Mono', monospace",
-      width: 56,
-      textAlign: "center",
-    },
-    btnPrimary: {
-      padding: "8px 22px",
-      borderRadius: 6,
-      fontSize: 12,
-      fontWeight: 700,
-      border: "none",
-      background: "#a78bfa",
-      color: "#0a0d13",
-      cursor: "pointer",
-      letterSpacing: "0.03em",
-      transition: "all 0.15s",
-    },
-    btnPrimaryDisabled: {
-      opacity: 0.4,
-      cursor: "not-allowed",
-    },
-    divider: {
-      width: 1,
-      height: 24,
-      background: "#1c2233",
-    },
-    section: {
-      padding: "20px 28px",
-    },
-    sectionTitle: {
-      fontSize: 15,
-      fontWeight: 700,
-      color: "#a78bfa",
-      marginBottom: 14,
-      letterSpacing: "-0.01em",
-    },
-    statCard: {
-      background: "#12161f",
-      borderRadius: 8,
-      border: "1px solid #1c2233",
-      padding: "12px 16px",
-      minWidth: 110,
-    },
-    statLabel: { fontSize: 10, color: "#71717a", marginBottom: 2 },
-    statValue: { fontSize: 18, fontWeight: 700, fontFamily: "'DM Mono', monospace" },
-  };
-
   return (
-    <div style={S.page}>
+    <div className="min-h-screen bg-base-900 text-text-primary font-sans">
       {/* --- Toolbar --- */}
-      <div style={S.toolbar}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={S.label}>Groups</span>
+      <div className="flex items-center flex-wrap gap-4 px-7 py-3.5 bg-base-800 border-b border-base-500">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-base-100 uppercase tracking-wider font-semibold">
+            Groups
+          </span>
           <input
             type="number"
             min={1}
@@ -762,14 +653,16 @@ export default function Generator({
             onChange={e => setNumGroups(
               Math.max(1, Math.min(parseInt(e.target.value) || 1, activities.length, effectiveSlots))
             )}
-            style={S.input}
+            className="bg-base-500 border border-base-400 rounded-md text-text-primary px-2.5 py-1.5 text-[13px] font-mono w-14 text-center"
           />
         </div>
 
-        <div style={S.divider} />
+        <div className="w-px h-6 bg-base-500" />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={S.label}>Rotations</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-base-100 uppercase tracking-wider font-semibold">
+            Rotations
+          </span>
           <input
             type="number"
             min={1}
@@ -778,52 +671,40 @@ export default function Generator({
             onChange={e => setNumRotations(
               Math.max(1, Math.min(parseInt(e.target.value) || 1, 4))
             )}
-            style={S.input}
+            className="bg-base-500 border border-base-400 rounded-md text-text-primary px-2.5 py-1.5 text-[13px] font-mono w-14 text-center"
           />
         </div>
 
-        <div style={S.divider} />
+        <div className="w-px h-6 bg-base-500" />
 
         <button
           onClick={handleGenerate}
           disabled={generating || activities.length === 0}
-          style={{
-            ...S.btnPrimary,
-            ...(generating ? S.btnPrimaryDisabled : {}),
-          }}
+          className={`px-5 py-2 rounded-md text-xs font-bold border-none bg-accent-purple text-base-900 cursor-pointer tracking-wide transition-all ${
+            generating ? "opacity-40 cursor-not-allowed" : ""
+          }`}
         >
           {generating ? "Generating..." : "Generate"}
         </button>
 
         {/* Info */}
-        <span style={{ fontSize: 11, color: "#52525b", marginLeft: 8 }}>
-          {activities.length} activities Â· {effectiveSlots} slots Â· {daySlices.length} days
+        <span className="text-[11px] text-base-200 ml-2">
+          {activities.length} activities · {effectiveSlots} slots · {daySlices.length} days
         </span>
       </div>
 
       {/* --- Rotation Tabs --- */}
       {rotations.length > 1 && (
-        <div style={{
-          padding: "10px 28px 0",
-          display: "flex",
-          gap: 6,
-        }}>
+        <div className="flex gap-1.5 px-7 pt-2.5">
           {rotations.map((_, i) => (
             <button
               key={i}
               onClick={() => setActiveRotation(i)}
-              style={{
-                padding: "6px 18px",
-                borderRadius: "6px 6px 0 0",
-                fontSize: 12,
-                fontWeight: 600,
-                border: "1px solid",
-                borderBottom: "none",
-                borderColor: activeRotation === i ? "#a78bfa" : "#1c2233",
-                background: activeRotation === i ? "#1a1630" : "transparent",
-                color: activeRotation === i ? "#a78bfa" : "#52525b",
-                cursor: "pointer",
-              }}
+              className={`px-4 py-1.5 rounded-t-md text-xs font-semibold border border-b-0 cursor-pointer ${
+                activeRotation === i
+                  ? "border-accent-purple bg-[#1a1630] text-accent-purple"
+                  : "border-base-500 bg-transparent text-base-200"
+              }`}
             >
               Rotation {String.fromCharCode(65 + i)}
             </button>
@@ -833,56 +714,51 @@ export default function Generator({
 
       {/* --- Summary Stats --- */}
       {stats && (
-        <div style={S.section}>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
-            <div style={S.statCard}>
-              <div style={S.statLabel}>Avg Value</div>
-              <div style={{ ...S.statValue, color: "#34d399" }}>{stats.avgValue}</div>
+        <div className="px-7 py-5">
+          <div className="flex gap-3 flex-wrap mb-4">
+            <div className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]">
+              <div className="text-[10px] text-base-100 mb-0.5">Avg Value</div>
+              <div className="text-lg font-bold font-mono text-accent-green">
+                {stats.avgValue}
+              </div>
             </div>
-            <div style={S.statCard}>
-              <div style={S.statLabel}>Avg Walk</div>
-              <div style={{ ...S.statValue, color: "#fbbf24" }}>{stats.avgDist}m</div>
+            <div className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]">
+              <div className="text-[10px] text-base-100 mb-0.5">Avg Walk</div>
+              <div className="text-lg font-bold font-mono text-warning">
+                {stats.avgDist}m
+              </div>
             </div>
-            <div style={S.statCard}>
-              <div style={S.statLabel}>Adjacencies</div>
-              <div style={{
-                ...S.statValue,
-                color: stats.totalAdjacencies === 0 ? "#34d399" : "#f87171",
-              }}>
+            <div className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]">
+              <div className="text-[10px] text-base-100 mb-0.5">Adjacencies</div>
+              <div className={`text-lg font-bold font-mono ${
+                stats.totalAdjacencies === 0 ? "text-accent-green" : "text-error-light"
+              }`}>
                 {stats.totalAdjacencies}
               </div>
             </div>
-            <div style={S.statCard}>
-              <div style={S.statLabel}>Latin Square</div>
-              <div style={{
-                ...S.statValue,
-                fontSize: 14,
-                color: validation?.valid ? "#34d399" : "#f87171",
-              }}>
-                {validation?.valid ? "Valid âœ“" : `${validation?.issues?.length || 0} issues`}
+            <div className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]">
+              <div className="text-[10px] text-base-100 mb-0.5">Latin Square</div>
+              <div className={`text-sm font-bold font-mono ${
+                validation?.valid ? "text-accent-green" : "text-error-light"
+              }`}>
+                {validation?.valid ? "Valid \u2713" : `${validation?.issues?.length || 0} issues`}
               </div>
             </div>
           </div>
 
           {/* Validation issues */}
           {validation && !validation.valid && (
-            <div style={{
-              background: "#1c1117",
-              border: "1px solid #4c1d29",
-              borderRadius: 8,
-              padding: "10px 14px",
-              marginBottom: 16,
-            }}>
-              <div style={{ fontSize: 11, color: "#f87171", fontWeight: 600, marginBottom: 6 }}>
+            <div className="bg-[#1c1117] border border-[#4c1d29] rounded-lg px-3.5 py-2.5 mb-4">
+              <div className="text-[11px] text-error-light font-semibold mb-1.5">
                 Latin Square Issues
               </div>
               {validation.issues.slice(0, 8).map((issue, i) => (
-                <div key={i} style={{ fontSize: 10, color: "#fca5a5", marginBottom: 2 }}>
-                  Â· {issue}
+                <div key={i} className="text-[10px] text-[#fca5a5] mb-0.5">
+                  · {issue}
                 </div>
               ))}
               {validation.issues.length > 8 && (
-                <div style={{ fontSize: 10, color: "#71717a", marginTop: 4 }}>
+                <div className="text-[10px] text-base-100 mt-1">
                   ...and {validation.issues.length - 8} more
                 </div>
               )}
@@ -893,40 +769,22 @@ export default function Generator({
 
       {/* --- Matrix Grid --- */}
       {matrix && (
-        <div style={{ ...S.section, paddingTop: 0, overflowX: "auto" }}>
-          <table style={{
-            borderCollapse: "collapse",
-            width: "100%",
-            tableLayout: "fixed",
-          }}>
+        <div className="px-7 pt-0 pb-5 overflow-x-auto">
+          <table className="border-collapse w-full table-fixed">
             {/* Day headers */}
             <thead>
               <tr>
-                <th style={{
-                  width: 52,
-                  padding: "4px 8px",
-                  fontSize: 9,
-                  color: "#52525b",
-                  textAlign: "left",
-                  position: "sticky",
-                  left: 0,
-                  background: "#0a0d13",
-                  zIndex: 2,
-                }}>
+                <th className="w-[52px] px-2 py-1 text-[9px] text-base-200 text-left sticky left-0 bg-base-900 z-[2]">
                   Group
                 </th>
                 {daySlices.map((day, di) => (
                   <th
                     key={di}
                     colSpan={day.end - day.start}
+                    className="px-2 py-1.5 text-[11px] font-bold text-center tracking-wide"
                     style={{
-                      padding: "6px 8px",
-                      fontSize: 11,
-                      fontWeight: 700,
                       color: DAY_COLORS[day.name] || "#a78bfa",
-                      textAlign: "center",
                       borderBottom: `2px solid ${DAY_COLORS[day.name] || "#a78bfa"}33`,
-                      letterSpacing: "0.04em",
                     }}
                   >
                     {day.name}
@@ -935,23 +793,13 @@ export default function Generator({
               </tr>
               {/* Time slot sub-header */}
               <tr>
-                <th style={{
-                  position: "sticky",
-                  left: 0,
-                  background: "#0a0d13",
-                  zIndex: 2,
-                }} />
+                <th className="sticky left-0 bg-base-900 z-[2]" />
                 {timeSlots.map((slot, si) => (
                   <th
                     key={si}
-                    style={{
-                      padding: "3px 2px",
-                      fontSize: 8,
-                      color: "#52525b",
-                      fontWeight: 500,
-                      textAlign: "center",
-                      borderLeft: dayBounds.has(si) ? "2px solid #1c2233" : "none",
-                    }}
+                    className={`px-0.5 py-0.5 text-[8px] text-base-200 font-medium text-center ${
+                      dayBounds.has(si) ? "border-l-2 border-base-500" : ""
+                    }`}
                   >
                     {slot.time}
                   </th>
@@ -962,37 +810,19 @@ export default function Generator({
             <tbody>
               {matrix.map((row, gi) => (
                 <tr key={gi}>
-                  <td style={{
-                    padding: "4px 8px",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#a78bfa",
-                    fontFamily: "'DM Mono', monospace",
-                    position: "sticky",
-                    left: 0,
-                    background: "#0a0d13",
-                    zIndex: 1,
-                    borderRight: "1px solid #1c2233",
-                  }}>
+                  <td className="px-2 py-1 text-[11px] font-bold text-accent-purple font-mono sticky left-0 bg-base-900 z-[1] border-r border-base-500">
                     A{gi + 1}
                   </td>
                   {row.map((activity, si) => {
                     if (!activity) {
                       return (
-                        <td key={si} style={{
-                          padding: 2,
-                          borderLeft: dayBounds.has(si) ? "2px solid #1c2233" : "none",
-                        }}>
-                          <div style={{
-                            background: "#14181f",
-                            borderRadius: 4,
-                            height: 52,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 10,
-                            color: "#3f3f46",
-                          }}>
+                        <td
+                          key={si}
+                          className={`p-0.5 ${
+                            dayBounds.has(si) ? "border-l-2 border-base-500" : ""
+                          }`}
+                        >
+                          <div className="bg-base-700 rounded h-[52px] flex items-center justify-center text-[10px] text-base-300">
                             —
                           </div>
                         </td>
@@ -1016,93 +846,55 @@ export default function Generator({
                     const isBoosted = isLastOfDay || isLastOfSchedule;
 
                     return (
-                      <td key={si} style={{
-                        padding: 2,
-                        borderLeft: dayBounds.has(si) ? "2px solid #1c2233" : "none",
-                      }}>
+                      <td
+                        key={si}
+                        className={`p-0.5 ${
+                          dayBounds.has(si) ? "border-l-2 border-base-500" : ""
+                        }`}
+                      >
                         <div
-                          style={{
-                            background: colors.bg,
-                            borderRadius: 5,
-                            padding: "4px 5px",
-                            height: 52,
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "space-between",
-                            position: "relative",
-                            border: isAdjacentViolation
-                              ? "2px solid #ef4444"
+                          className={`rounded-[5px] px-[5px] py-1 h-[52px] flex flex-col justify-between relative overflow-hidden ${
+                            isAdjacentViolation
+                              ? "border-2 border-[#ef4444]"
                               : isBoosted
-                                ? "1px solid #a78bfa55"
-                                : "1px solid transparent",
-                            overflow: "hidden",
-                          }}
+                                ? "border border-[#a78bfa55]"
+                                : "border border-transparent"
+                          }`}
+                          style={{ backgroundColor: colors.bg }}
                           title={`${activity.name}\nValue: ${activity.value}\nGroup: ${simGroup || "none"}\nZone: ${activity.zone}`}
                         >
                           {/* Similarity group indicator */}
                           {simGroup && (
-                            <div style={{
-                              position: "absolute",
-                              top: 0,
-                              right: 0,
-                              width: 6,
-                              height: 6,
-                              borderRadius: "0 4px 0 4px",
-                              background: simColor,
-                              opacity: 0.8,
-                            }} />
+                            <div
+                              className="absolute top-0 right-0 w-1.5 h-1.5 rounded-tr rounded-bl opacity-80"
+                              style={{ backgroundColor: simColor }}
+                            />
                           )}
 
                           {/* Boost indicator */}
                           {isBoosted && (
-                            <div style={{
-                              position: "absolute",
-                              top: 1,
-                              left: 3,
-                              fontSize: 7,
-                              color: "#a78bfa",
-                              opacity: 0.7,
-                            }}>
-                              â˜…
+                            <div className="absolute top-px left-[3px] text-[7px] text-accent-purple opacity-70">
+                              ★
                             </div>
                           )}
 
                           {/* Activity name */}
-                          <div style={{
-                            fontSize: 10,
-                            fontWeight: 600,
-                            color: colors.text,
-                            lineHeight: 1.2,
-                            marginTop: 2,
-                          }}>
+                          <div
+                            className="text-[10px] font-semibold leading-tight mt-0.5"
+                            style={{ color: colors.text }}
+                          >
                             {shortName(activity.name)}
                           </div>
 
                           {/* Footer: zone + value */}
-                          <div style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-end",
-                          }}>
-                            <span style={{
-                              fontSize: 7,
-                              color: "#52525b",
-                              maxWidth: 40,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}>
+                          <div className="flex justify-between items-end">
+                            <span className="text-[7px] text-base-200 max-w-[40px] overflow-hidden text-ellipsis whitespace-nowrap">
                               {activity.zone}
                             </span>
-                            <span style={{
-                              fontSize: 9,
-                              fontWeight: 700,
-                              fontFamily: "'DM Mono', monospace",
-                              color: colors.text,
-                              background: "rgba(0,0,0,0.25)",
-                              borderRadius: 3,
-                              padding: "1px 4px",
-                            }}>
+                            <span
+                              className="text-[9px] font-bold font-mono bg-black/25 rounded-[3px] px-1 py-px"
+                              style={{ color: colors.text }}
+                            >
                               {activity.value}
                             </span>
                           </div>
@@ -1119,41 +911,39 @@ export default function Generator({
 
       {/* --- Per-Group Stats --- */}
       {stats && matrix && (
-        <div style={S.section}>
-          <div style={S.sectionTitle}>Per-Group Statistics</div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="px-7 py-5">
+          <div className="text-[15px] font-bold text-accent-purple mb-3.5 -tracking-tight">
+            Per-Group Statistics
+          </div>
+          <div className="flex gap-2 flex-wrap">
             {stats.groupStats.map((gs, gi) => (
-              <div key={gi} style={S.statCard}>
-                <div style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#a78bfa",
-                  marginBottom: 6,
-                  fontFamily: "'DM Mono', monospace",
-                }}>
+              <div
+                key={gi}
+                className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]"
+              >
+                <div className="text-xs font-bold text-accent-purple mb-1.5 font-mono">
                   A{gi + 1}
                 </div>
-                <div style={S.statLabel}>
-                  Value: <span style={{ color: "#34d399", fontWeight: 600 }}>
+                <div className="text-[10px] text-base-100 mb-0.5">
+                  Value: <span className="text-accent-green font-semibold">
                     {gs.value}
                   </span>
                 </div>
-                <div style={S.statLabel}>
-                  Walk: <span style={{ color: "#fbbf24", fontWeight: 600 }}>
+                <div className="text-[10px] text-base-100 mb-0.5">
+                  Walk: <span className="text-warning font-semibold">
                     {gs.dist}m
                   </span>
                 </div>
-                <div style={S.statLabel}>
-                  Long walks: <span style={{
-                    color: gs.longWalks > 2 ? "#f87171" : "#71717a",
-                    fontWeight: 600,
-                  }}>
+                <div className="text-[10px] text-base-100 mb-0.5">
+                  Long walks: <span className={`font-semibold ${
+                    gs.longWalks > 2 ? "text-error-light" : "text-base-100"
+                  }`}>
                     {gs.longWalks}
                   </span>
                 </div>
                 {gs.adjacencies > 0 && (
-                  <div style={S.statLabel}>
-                    Adj. violations: <span style={{ color: "#f87171", fontWeight: 600 }}>
+                  <div className="text-[10px] text-base-100 mb-0.5">
+                    Adj. violations: <span className="text-error-light font-semibold">
                       {gs.adjacencies}
                     </span>
                   </div>
@@ -1166,22 +956,18 @@ export default function Generator({
 
       {/* --- Similarity Legend --- */}
       {matrix && (
-        <div style={S.section}>
-          <div style={S.sectionTitle}>Similarity Groups</div>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <div className="px-7 py-5">
+          <div className="text-[15px] font-bold text-accent-purple mb-3.5 -tracking-tight">
+            Similarity Groups
+          </div>
+          <div className="flex gap-3 flex-wrap">
             {Object.entries(SIM_GROUP_COLORS).map(([group, color]) => (
-              <div key={group} style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}>
-                <div style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 2,
-                  background: color,
-                }} />
-                <span style={{ fontSize: 11, color: "#71717a" }}>{group}</span>
+              <div key={group} className="flex items-center gap-1.5">
+                <div
+                  className="w-2 h-2 rounded-sm"
+                  style={{ backgroundColor: color }}
+                />
+                <span className="text-[11px] text-base-100">{group}</span>
               </div>
             ))}
           </div>
@@ -1190,34 +976,14 @@ export default function Generator({
 
       {/* --- Empty State --- */}
       {!matrix && !generating && (
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "80px 28px",
-          textAlign: "center",
-        }}>
-          <div style={{
-            fontSize: 48,
-            marginBottom: 16,
-            opacity: 0.15,
-          }}>
-            â¬¡
+        <div className="flex flex-col items-center justify-center px-7 py-20 text-center">
+          <div className="text-5xl mb-4 opacity-15">
+            ⬡
           </div>
-          <div style={{
-            fontSize: 16,
-            color: "#52525b",
-            marginBottom: 8,
-          }}>
+          <div className="text-base text-base-200 mb-2">
             No schedule generated yet
           </div>
-          <div style={{
-            fontSize: 12,
-            color: "#3f3f46",
-            maxWidth: 420,
-            lineHeight: 1.5,
-          }}>
+          <div className="text-xs text-base-300 max-w-[420px] leading-relaxed">
             Configure the number of groups and rotations above, then click Generate.
             The algorithm uses greedy row-by-row assignment with hard adjacency constraints
             to prevent same-type activities (like High Ropes) from appearing back-to-back.
@@ -1227,33 +993,13 @@ export default function Generator({
 
       {/* --- Generating Spinner --- */}
       {generating && (
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "80px 28px",
-        }}>
-          <div style={{
-            width: 32,
-            height: 32,
-            border: "3px solid #1c2233",
-            borderTopColor: "#a78bfa",
-            borderRadius: "50%",
-            animation: "spin 0.8s linear infinite",
-          }} />
-          <div style={{ fontSize: 13, color: "#71717a", marginTop: 14 }}>
+        <div className="flex flex-col items-center justify-center px-7 py-20">
+          <div className="w-8 h-8 border-3 border-base-500 border-t-accent-purple rounded-full animate-spin" />
+          <div className="text-[13px] text-base-100 mt-3.5">
             Generating {numRotations} rotation{numRotations > 1 ? "s" : ""}...
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }

@@ -4,27 +4,8 @@ import {
   valueColor, valueTextColor,
 } from '../constants/colors.js';
 import { getDistance, getStartDistance, lookupMeta, shortName } from '../utils/parsers.js';
+import { parseStaff, escapeCSV } from '../utils/scheduleStats.js';
 
-
-// Helpers
-
-/** Parse staff string like "(1/2)", "(4/4)", "(1/2) + float" -> { min, ideal } */
-function parseStaff(staffStr) {
-  if (!staffStr || !staffStr.trim()) return { min: 0, ideal: 0 };
-  const m = staffStr.match(/\((\d+)\s*\/\s*(\d+)\)/);
-  if (!m) return { min: 0, ideal: 0 };
-  return { min: parseInt(m[1], 10), ideal: parseInt(m[2], 10) };
-}
-
-/** Escape a value for CSV (wrap in quotes if contains comma, newline, or quote) */
-function escapeCSV(val) {
-  if (val == null) return '';
-  const str = String(val);
-  if (str.includes(',') || str.includes('\n') || str.includes('"')) {
-    return '"' + str.replace(/"/g, '""') + '"';
-  }
-  return str;
-}
 
 /**
  * Generate CSV content matching the Google Sheets format.
@@ -36,7 +17,7 @@ function escapeCSV(val) {
 function generateExportCSV(rotations, timeSlots, daySlices) {
   const rows = [];
   const numSlots = timeSlots.length;
-  
+
   // Build day header row: empty cells for label columns, then day names spread across their slots
   const dayRow = ['', '', ''];
   for (const day of daySlices) {
@@ -48,41 +29,41 @@ function generateExportCSV(rotations, timeSlots, daySlices) {
     }
   }
   rows.push(dayRow.map(escapeCSV).join(','));
-  
+
   // Build time header row
   const timeRow = ['', '', ''];
   for (const slot of timeSlots) {
     timeRow.push(slot.time);
   }
   rows.push(timeRow.map(escapeCSV).join(','));
-  
+
   // Build rotation data rows
   for (const rot of rotations) {
     for (let gi = 0; gi < rot.groups.length; gi++) {
       const group = rot.groups[gi];
       const row = [];
-      
+
       // First cell: rotation name only on first group
       row.push(gi === 0 ? `Activity Rotation ${rot.name}` : '');
-      
+
       // Second cell: empty
       row.push('');
-      
+
       // Third cell: group number
       row.push(gi + 1);
-      
+
       // Activity cells
       for (let si = 0; si < numSlots; si++) {
         row.push(group[si] || '');
       }
-      
+
       rows.push(row.map(escapeCSV).join(','));
     }
-    
+
     // Add empty row between rotations for readability
     rows.push('');
   }
-  
+
   return rows.join('\n');
 }
 
@@ -111,11 +92,10 @@ function DistanceBadge({ dist }) {
   else if (dist > 400) { color = '#d97706'; bg = '#fffbeb'; }
   else if (dist > 200) { color = '#6b7280'; bg = '#f3f4f6'; }
   return (
-    <div style={{
-      fontSize: 9, color, background: bg, borderRadius: 3,
-      padding: '1px 4px', textAlign: 'center', fontWeight: 600,
-      lineHeight: '14px', minWidth: 28, fontFamily: "'DM Mono', monospace",
-    }}>
+    <div
+      className="text-[9px] rounded-[3px] px-1 py-px text-center font-semibold leading-[14px] min-w-[28px] font-mono"
+      style={{ color, background: bg }}
+    >
       {dist}m
     </div>
   );
@@ -132,52 +112,48 @@ function DayStatsCard({ dayName, stats, color, slotCount }) {
   if (stats.indoorCount === 0 && slotCount >= 3) alerts.push({ type: 'info', msg: 'No indoor option' });
 
   return (
-    <div style={{
-      flex: '1 1 220px', background: '#141924', borderRadius: 10,
-      border: '1px solid #1e2636', padding: 18, minWidth: 200,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <div style={{ width: 4, height: 22, borderRadius: 2, background: color }} />
-        <h4 style={{ margin: 0, fontSize: 15, fontFamily: "'Playfair Display', serif", color }}>{dayName}</h4>
-        <span style={{ fontSize: 10, color: '#555', marginLeft: 'auto' }}>{slotCount} slots</span>
+    <div className="flex-[1_1_220px] bg-base-700 rounded-[10px] border border-base-500 p-[18px] min-w-[200px]">
+      <div className="flex items-center gap-2 mb-3.5">
+        <div className="w-1 h-[22px] rounded-sm" style={{ background: color }} />
+        <h4 className="m-0 text-[15px] font-display" style={{ color }}>{dayName}</h4>
+        <span className="text-[10px] text-text-faint ml-auto">{slotCount} slots</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Avg Value</div>
-          <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'DM Mono', monospace", color: stats.avgVal > 65 ? '#27ae60' : stats.avgVal > 45 ? '#d4a847' : '#e74c3c' }}>{stats.avgVal}</div>
+          <div className="section-label text-text-muted mb-0.5">Avg Value</div>
+          <div className="text-[22px] font-bold font-mono" style={{ color: stats.avgVal > 65 ? '#27ae60' : stats.avgVal > 45 ? '#d4a847' : '#e74c3c' }}>{stats.avgVal}</div>
         </div>
         <div>
-          <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Walk Dist</div>
-          <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'DM Mono', monospace", color: '#aaa' }}>
-            {stats.totalDist}<span style={{ fontSize: 10 }}>m</span>
+          <div className="section-label text-text-muted mb-0.5">Walk Dist</div>
+          <div className="text-[22px] font-bold font-mono text-[#aaa]">
+            {stats.totalDist}<span className="text-[10px]">m</span>
             {stats.startDist !== null && stats.startDist !== undefined && (
-              <span style={{ fontSize: 9, color: '#60a5fa', marginLeft: 4 }}>(+{stats.startDist})</span>
+              <span className="text-[9px] text-[#60a5fa] ml-1">(+{stats.startDist})</span>
             )}
           </div>
         </div>
         <div>
-          <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Max Walk</div>
-          <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: stats.maxDist > 600 ? '#e74c3c' : stats.maxDist > 400 ? '#d97706' : '#888' }}>{stats.maxDist}<span style={{ fontSize: 10 }}>m</span></div>
+          <div className="section-label text-text-muted mb-0.5">Max Walk</div>
+          <div className="text-[17px] font-semibold font-mono" style={{ color: stats.maxDist > 600 ? '#e74c3c' : stats.maxDist > 400 ? '#d97706' : '#888' }}>{stats.maxDist}<span className="text-[10px]">m</span></div>
         </div>
         <div>
-          <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Indoor</div>
-          <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: stats.indoorCount > 0 ? '#8e44ad' : '#555' }}>{stats.indoorCount}</div>
+          <div className="section-label text-text-muted mb-0.5">Indoor</div>
+          <div className="text-[17px] font-semibold font-mono" style={{ color: stats.indoorCount > 0 ? '#8e44ad' : '#555' }}>{stats.indoorCount}</div>
         </div>
       </div>
       {/* Intensity flow */}
-      <div style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Intensity Flow</div>
-        <div style={{ display: 'flex', gap: 3 }}>
+      <div className="mt-3">
+        <div className="section-label text-text-muted mb-1">Intensity Flow</div>
+        <div className="flex gap-[3px]">
           {stats.intensities.map((int, i) => (
-            <div key={i} style={{ flex: 1, height: 8, borderRadius: 3, background: INTENSITY_COLORS[int] || '#333' }} title={int} />
+            <div key={i} className="flex-1 h-2 rounded-[3px]" style={{ background: INTENSITY_COLORS[int] || '#333' }} title={int} />
           ))}
         </div>
       </div>
       {alerts.length > 0 && (
-        <div style={{ marginTop: 10 }}>
+        <div className="mt-2.5">
           {alerts.map((a, i) => (
-            <div key={i} style={{
-              fontSize: 10, padding: '3px 7px', borderRadius: 3, marginBottom: 2,
+            <div key={i} className="text-[10px] px-[7px] py-[3px] rounded-[3px] mb-0.5" style={{
               background: a.type === 'error' ? '#3d1111' : a.type === 'warn' ? '#3d2e11' : '#112a3d',
               color: a.type === 'error' ? '#f87171' : a.type === 'warn' ? '#fbbf24' : '#60a5fa',
               borderLeft: `2px solid ${a.type === 'error' ? '#ef4444' : a.type === 'warn' ? '#f59e0b' : '#3b82f6'}`,
@@ -194,16 +170,12 @@ function DayStatsCard({ dayName, stats, color, slotCount }) {
 function DetailPanel({ activity, registry, distMatrix, onClose }) {
   const meta = lookupMeta(activity, registry);
   if (!meta) return (
-    <div style={{
-      position: 'fixed', top: 0, right: 0, width: 360, height: '100vh',
-      background: '#1a1f2e', zIndex: 1000, borderLeft: '3px solid #d4a847',
-      boxShadow: '-4px 0 30px rgba(0,0,0,0.5)', overflowY: 'auto', padding: 24,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontFamily: "'Playfair Display', serif", color: '#d4a847' }}>{registry.nameMap[activity] || activity}</h2>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#999', fontSize: 22, cursor: 'pointer' }}>&times;</button>
+    <div className="fixed top-0 right-0 w-[360px] h-screen bg-base-600 z-[1000] border-l-[3px] border-accent-gold shadow-[-4px_0_30px_rgba(0,0,0,0.5)] overflow-y-auto p-6">
+      <div className="flex justify-between mb-5">
+        <h2 className="m-0 text-lg font-display text-accent-gold">{registry.nameMap[activity] || activity}</h2>
+        <button onClick={onClose} className="bg-transparent border-none text-[#999] text-[22px] cursor-pointer">&times;</button>
       </div>
-      <div style={{ fontSize: 12, color: '#e74c3c', padding: '8px 12px', background: '#3d1111', borderRadius: 6 }}>
+      <div className="text-xs text-error-light px-3 py-2 bg-[#3d1111] rounded-md">
         No metadata found for this activity. Check name matching in the warnings panel.
       </div>
     </div>
@@ -225,46 +197,41 @@ function DetailPanel({ activity, registry, distMatrix, onClose }) {
     : [];
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, right: 0, width: 360, height: '100vh',
-      background: '#1a1f2e', color: '#e8e6e1', zIndex: 1000,
-      boxShadow: '-4px 0 30px rgba(0,0,0,0.5)', overflowY: 'auto',
-      fontFamily: "'DM Sans', sans-serif", borderLeft: '3px solid #d4a847',
-    }}>
-      <div style={{ padding: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontFamily: "'Playfair Display', serif", color: '#d4a847', lineHeight: 1.3 }}>{cn}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#999', fontSize: 22, cursor: 'pointer', padding: '0 4px' }}>&times;</button>
+    <div className="fixed top-0 right-0 w-[360px] h-screen bg-base-600 text-text-primary z-[1000] shadow-[-4px_0_30px_rgba(0,0,0,0.5)] overflow-y-auto font-sans border-l-[3px] border-accent-gold">
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-5">
+          <h2 className="m-0 text-xl font-display text-accent-gold leading-[1.3]">{cn}</h2>
+          <button onClick={onClose} className="bg-transparent border-none text-[#999] text-[22px] cursor-pointer px-1">&times;</button>
         </div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-          <span style={{ background: meta.io === 'Indoor' ? '#8e44ad' : '#27ae60', color: '#fff', padding: '3px 10px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{meta.io}</span>
-          <span style={{ background: INTENSITY_COLORS[meta.intensity] || '#333', color: INTENSITY_TEXT[meta.intensity] || '#fff', padding: '3px 10px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{meta.intensity}</span>
-          <span style={{ background: '#2a3040', color: '#aaa', padding: '3px 10px', borderRadius: 4, fontSize: 11 }}>{meta.season}</span>
+        <div className="flex gap-2 mb-5 flex-wrap">
+          <span className="text-white px-2.5 py-[3px] rounded text-[11px] font-semibold" style={{ background: meta.io === 'Indoor' ? '#8e44ad' : '#27ae60' }}>{meta.io}</span>
+          <span className="px-2.5 py-[3px] rounded text-[11px] font-semibold" style={{ background: INTENSITY_COLORS[meta.intensity] || '#333', color: INTENSITY_TEXT[meta.intensity] || '#fff' }}>{meta.intensity}</span>
+          <span className="bg-base-400 text-[#aaa] px-2.5 py-[3px] rounded text-[11px]">{meta.season}</span>
         </div>
         {/* Value bar */}
-        <div style={{ background: 'linear-gradient(135deg, #2a3040, #1e2636)', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Customer Value</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontSize: 36, fontWeight: 700, color: '#d4a847', fontFamily: "'DM Mono', monospace" }}>{meta.value}</div>
-            <div style={{ flex: 1, background: '#1a1f2e', borderRadius: 4, height: 8 }}>
-              <div style={{ width: `${meta.value}%`, height: '100%', borderRadius: 4, background: 'linear-gradient(90deg, #8b6914, #d4a847)' }} />
+        <div className="bg-gradient-to-br from-base-400 to-base-500 rounded-lg p-4 mb-4">
+          <div className="text-[11px] text-text-secondary uppercase tracking-[1px] mb-1.5">Customer Value</div>
+          <div className="flex items-center gap-3">
+            <div className="text-4xl font-bold text-accent-gold font-mono">{meta.value}</div>
+            <div className="flex-1 bg-base-600 rounded h-2">
+              <div className="h-full rounded" style={{ width: `${meta.value}%`, background: 'linear-gradient(90deg, #8b6914, #d4a847)' }} />
             </div>
           </div>
         </div>
         {[['Location Zone', meta.location], ['Staff Required', meta.staff], ['Setup Time', meta.setup], ['Scalability', meta.scalable], ['UID', meta.uid]].map(([label, val]) => (
-          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #2a3040' }}>
-            <span style={{ fontSize: 12, color: '#888' }}>{label}</span>
-            <span style={{ fontSize: 13, color: '#e8e6e1', fontWeight: 500 }}>{val || 'â€”'}</span>
+          <div key={label} className="flex justify-between py-2.5 border-b border-base-400">
+            <span className="text-xs text-text-secondary">{label}</span>
+            <span className="text-[13px] text-text-primary font-medium">{val || '\u2014'}</span>
           </div>
         ))}
         {/* Nearest activities */}
         {nearest.length > 0 && (
-          <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Nearest Activities</div>
+          <div className="mt-5">
+            <div className="text-[11px] text-text-secondary uppercase tracking-[1px] mb-2.5">Nearest Activities</div>
             {nearest.map(([name, dist]) => (
-              <div key={name} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 12 }}>
-                <span style={{ color: '#bbb' }}>{shortName(name)}</span>
-                <span style={{ color: dist < 200 ? '#27ae60' : dist < 500 ? '#d4a847' : '#e74c3c', fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>{dist}m</span>
+              <div key={name} className="flex justify-between py-1.5 text-xs">
+                <span className="text-[#bbb]">{shortName(name)}</span>
+                <span className="font-mono font-semibold" style={{ color: dist < 200 ? '#27ae60' : dist < 500 ? '#d4a847' : '#e74c3c' }}>{dist}m</span>
               </div>
             ))}
           </div>
@@ -286,7 +253,7 @@ function computeDayStats(group, start, end, registry, distMatrix, startLocation)
   let totalDist = 0, maxDist = 0, consecutiveIntense = 0, maxConsecutiveIntense = 0;
   let startDist = null;
 
-  // Add start â†’ first activity distance
+  // Add start -> first activity distance
   if (startLocation && slice.length > 0) {
     startDist = getStartDistance(startLocation, slice[0], distMatrix, registry.nameMap);
     if (startDist !== null) { totalDist += startDist; maxDist = Math.max(maxDist, startDist); }
@@ -342,7 +309,7 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
   // Staffing group selection (defaults all on)
   const [staffGroups, setStaffGroups] = useState(() => new Set(Array.from({ length: 12 }, (_, i) => i)));
-  
+
   // Staffing day selection (defaults all on)
   const [staffDays, setStaffDays] = useState(() => new Set(daySlices.map((_, i) => i)));
 
@@ -386,113 +353,108 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
   const dayColors = daySlices.map(d => DAY_COLORS[d.name] || '#d4a847');
 
   return (
-    <div style={{ background: '#0f1219', color: '#e8e6e1', fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="bg-base-800 text-text-primary font-sans">
 
       {/* -- Controls -- */}
-      <div style={{ padding: '10px 28px', background: '#141924', borderBottom: '1px solid #1e2636', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="px-7 py-2.5 bg-base-700 border-b border-base-500 flex gap-3 items-center flex-wrap">
         {/* Rotation selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="flex items-center gap-1.5">
           {rotations.map((r, i) => {
             const hasEdit = !!(editFlags && editFlags[i]);
             return (
-            <button key={i} onClick={() => setRotIdx(i)} style={{
-              padding: '5px 14px', borderRadius: 5, border: '1px solid',
-              borderColor: rotIdx === i ? '#d4a847' : '#2a3040',
-              background: rotIdx === i ? '#d4a847' : 'transparent',
-              color: rotIdx === i ? '#0f1219' : '#888',
-              fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}>
+            <button key={i} onClick={() => setRotIdx(i)}
+              className="btn-sm flex items-center gap-1 transition-all duration-200"
+              style={{
+                borderColor: rotIdx === i ? '#d4a847' : '#2a3040',
+                background: rotIdx === i ? '#d4a847' : 'transparent',
+                color: rotIdx === i ? '#0f1219' : '#888',
+              }}
+            >
               Rot {r.name}
               {hasEdit && (
-                <span style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  background: '#22d3ee', flexShrink: 0,
-                }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan shrink-0" />
               )}
             </button>
             );
           })}
         </div>
 
-        <div style={{ width: 1, height: 24, background: '#2a3040' }} />
+        <div className="w-px h-6 bg-base-400" />
 
-        {/* Edit toggle â€” controls App-level state */}
+        {/* Edit toggle -- controls App-level state */}
         {hasAnyEdits && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button onClick={onToggleEdited} style={{
-                padding: '5px 14px', borderRadius: 5, border: '1px solid',
-                borderColor: useEdited ? '#22d3ee' : '#2a3040',
-                background: useEdited ? 'rgba(34,211,238,0.10)' : 'transparent',
-                color: useEdited ? '#22d3ee' : '#888',
-                fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                display: 'flex', alignItems: 'center', gap: 5,
-              }}>
-                <span style={{ fontSize: 13, lineHeight: 1 }}>{useEdited ? '\u2611' : '\u2610'}</span>
+            <div className="flex items-center gap-1.5">
+              <button onClick={onToggleEdited}
+                className="btn-sm flex items-center gap-[5px] transition-all duration-200"
+                style={{
+                  borderColor: useEdited ? '#22d3ee' : '#2a3040',
+                  background: useEdited ? 'rgba(34,211,238,0.10)' : 'transparent',
+                  color: useEdited ? '#22d3ee' : '#888',
+                }}
+              >
+                <span className="text-[13px] leading-none">{useEdited ? '\u2611' : '\u2610'}</span>
                 Edited
               </button>
               {useEdited && hasEditForRot && onClearEdit && (
-                <button onClick={() => onClearEdit(rotIdx)} style={{
-                  padding: '4px 10px', borderRadius: 4, fontSize: 10, fontWeight: 600,
-                  border: '1px solid #dc262640', background: 'transparent',
-                  color: '#dc2626', cursor: 'pointer', transition: 'all 0.2s',
-                }}>Revert</button>
+                <button onClick={() => onClearEdit(rotIdx)}
+                  className="py-1 px-2.5 rounded text-[10px] font-semibold border border-error/25 bg-transparent text-error cursor-pointer transition-all duration-200"
+                >Revert</button>
               )}
             </div>
-            <div style={{ width: 1, height: 24, background: '#2a3040' }} />
+            <div className="w-px h-6 bg-base-400" />
           </>
         )}
 
         {/* Group selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginRight: 4 }}>Group</span>
-          <button onClick={() => setFocusGroup('all')} style={{
-            padding: '4px 10px', borderRadius: 4, fontSize: 10, fontWeight: 600, cursor: 'pointer',
-            border: focusGroup === 'all' ? '1px solid #d4a847' : '1px solid #2a3040',
-            background: focusGroup === 'all' ? '#d4a847' : 'transparent',
-            color: focusGroup === 'all' ? '#0f1219' : '#666', transition: 'all 0.2s',
-          }}>All</button>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] text-text-secondary uppercase tracking-[1px] mr-1">Group</span>
+          <button onClick={() => setFocusGroup('all')}
+            className="btn-pill transition-all duration-200"
+            style={{
+              border: focusGroup === 'all' ? '1px solid #d4a847' : '1px solid #2a3040',
+              background: focusGroup === 'all' ? '#d4a847' : 'transparent',
+              color: focusGroup === 'all' ? '#0f1219' : '#666',
+            }}
+          >All</button>
           {Array.from({ length: numGroups }, (_, i) => (
-            <button key={i} onClick={() => setFocusGroup(i)} style={{
-              padding: '4px 7px', borderRadius: 4, fontSize: 10, fontWeight: 600, cursor: 'pointer',
-              minWidth: 24, textAlign: 'center', fontFamily: "'DM Mono', monospace",
-              border: focusGroup === i ? '1px solid #d4a847' : '1px solid #2a3040',
-              background: focusGroup === i ? '#d4a847' : 'transparent',
-              color: focusGroup === i ? '#0f1219' : '#666', transition: 'all 0.2s',
-            }}>{i + 1}</button>
+            <button key={i} onClick={() => setFocusGroup(i)}
+              className="btn-pill min-w-[24px] text-center font-mono transition-all duration-200"
+              style={{
+                border: focusGroup === i ? '1px solid #d4a847' : '1px solid #2a3040',
+                background: focusGroup === i ? '#d4a847' : 'transparent',
+                color: focusGroup === i ? '#0f1219' : '#666',
+              }}
+            >{i + 1}</button>
           ))}
         </div>
 
-        <div style={{ width: 1, height: 24, background: '#2a3040' }} />
+        <div className="w-px h-6 bg-base-400" />
 
         {/* Color mode */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginRight: 4 }}>Color</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] text-text-secondary uppercase tracking-[1px] mr-1">Color</span>
           {[{ key: 'value', label: 'Value' }, { key: 'intensity', label: 'Intensity' }, { key: 'io', label: 'In/Out' }, { key: 'location', label: 'Zone' }].map(m => (
-            <button key={m.key} onClick={() => setColorMode(m.key)} style={{
-              padding: '4px 10px', borderRadius: 4, fontSize: 10, fontWeight: 500, cursor: 'pointer',
-              border: colorMode === m.key ? '1px solid #d4a847' : '1px solid #2a3040',
-              background: colorMode === m.key ? '#2a2518' : 'transparent',
-              color: colorMode === m.key ? '#d4a847' : '#888', transition: 'all 0.2s',
-            }}>{m.label}</button>
+            <button key={m.key} onClick={() => setColorMode(m.key)}
+              className="btn-pill font-medium transition-all duration-200"
+              style={{
+                border: colorMode === m.key ? '1px solid #d4a847' : '1px solid #2a3040',
+                background: colorMode === m.key ? '#2a2518' : 'transparent',
+                color: colorMode === m.key ? '#d4a847' : '#888',
+              }}
+            >{m.label}</button>
           ))}
         </div>
 
-        <div style={{ width: 1, height: 24, background: '#2a3040' }} />
+        <div className="w-px h-6 bg-base-400" />
 
         {/* Start location */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginRight: 4 }}>Start</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] text-text-secondary uppercase tracking-[1px] mr-1">Start</span>
           <select
             value={startLocation || ''}
             onChange={(e) => setStartLocation(e.target.value || null)}
-            style={{
-              padding: '4px 8px', borderRadius: 4, fontSize: 10, fontWeight: 500,
-              border: '1px solid #2a3040', background: '#0f1219', color: '#d4a847',
-              cursor: 'pointer', fontFamily: "'DM Mono', monospace",
-              maxWidth: 200,
-            }}
+            className="py-1 px-2 rounded text-[10px] font-medium border border-base-400 bg-base-800 text-accent-gold cursor-pointer font-mono max-w-[200px]"
           >
             <option value="">None</option>
             {startLocations.length > 0 && (
@@ -513,60 +475,54 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
         {/* Warnings toggle */}
         {registry.warnings.length > 0 && (
           <>
-            <div style={{ width: 1, height: 24, background: '#2a3040' }} />
-            <button onClick={() => setShowWarnings(!showWarnings)} style={{
-              padding: '4px 12px', borderRadius: 4, fontSize: 10, fontWeight: 600,
-              border: '1px solid #f59e0b', background: showWarnings ? '#3d2e11' : 'transparent',
-              color: '#fbbf24', cursor: 'pointer', transition: 'all 0.2s',
-            }}>
-              Ã¢Å¡Â  {registry.warnings.length} Name {registry.warnings.length === 1 ? 'Warning' : 'Warnings'}
+            <div className="w-px h-6 bg-base-400" />
+            <button onClick={() => setShowWarnings(!showWarnings)}
+              className="btn-pill border border-[#f59e0b] transition-all duration-200 text-warning"
+              style={{ background: showWarnings ? '#3d2e11' : 'transparent' }}
+            >
+              &#x26A0; {registry.warnings.length} Name {registry.warnings.length === 1 ? 'Warning' : 'Warnings'}
             </button>
           </>
         )}
 
         {/* Export button */}
-        <div style={{ width: 1, height: 24, background: '#2a3040' }} />
-        <button 
+        <div className="w-px h-6 bg-base-400" />
+        <button
           onClick={() => {
             const csv = generateExportCSV(rotations, timeSlots, daySlices);
             const timestamp = new Date().toISOString().slice(0, 10);
             downloadCSV(csv, `activity-matrix-${timestamp}.csv`);
           }}
-          style={{
-            padding: '4px 12px', borderRadius: 4, fontSize: 10, fontWeight: 600,
-            border: '1px solid #3b82f6', background: 'transparent',
-            color: '#60a5fa', cursor: 'pointer', transition: 'all 0.2s',
-            display: 'flex', alignItems: 'center', gap: 5,
-          }}
+          className="btn-pill border border-[#3b82f6] bg-transparent text-[#60a5fa] flex items-center gap-[5px] transition-all duration-200"
         >
-          ↓ Export CSV
+          &darr; Export CSV
         </button>
 
         {/* Legend */}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="ml-auto flex gap-2.5 items-center flex-wrap">
           {colorMode === 'intensity' && Object.entries(INTENSITY_COLORS).map(([k, c]) => (
-            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: c }} />
-              <span style={{ fontSize: 10, color: '#888' }}>{k}</span>
+            <div key={k} className="flex items-center gap-1">
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: c }} />
+              <span className="text-[10px] text-text-secondary">{k}</span>
             </div>
           ))}
           {colorMode === 'value' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 10, color: '#888' }}>0</span>
-              <div style={{ width: 80, height: 10, borderRadius: 2, background: 'linear-gradient(90deg, rgb(220,230,220), rgb(40,150,70))' }} />
-              <span style={{ fontSize: 10, color: '#888' }}>100</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-text-secondary">0</span>
+              <div className="w-20 h-2.5 rounded-sm" style={{ background: 'linear-gradient(90deg, rgb(220,230,220), rgb(40,150,70))' }} />
+              <span className="text-[10px] text-text-secondary">100</span>
             </div>
           )}
           {colorMode === 'io' && ['Indoor', 'Outdoor'].map(t => (
-            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: t === 'Indoor' ? '#6c3483' : '#1e8449' }} />
-              <span style={{ fontSize: 10, color: '#888' }}>{t}</span>
+            <div key={t} className="flex items-center gap-1">
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: t === 'Indoor' ? '#6c3483' : '#1e8449' }} />
+              <span className="text-[10px] text-text-secondary">{t}</span>
             </div>
           ))}
           {colorMode === 'location' && [...locationZones].map(k => (
-            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: LOCATION_COLORS[k] || '#555' }} />
-              <span style={{ fontSize: 10, color: '#888' }}>{k}</span>
+            <div key={k} className="flex items-center gap-1">
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: LOCATION_COLORS[k] || '#555' }} />
+              <span className="text-[10px] text-text-secondary">{k}</span>
             </div>
           ))}
         </div>
@@ -574,18 +530,15 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
       {/* -- Warnings panel -- */}
       {showWarnings && registry.warnings.length > 0 && (
-        <div style={{ padding: '14px 28px', background: '#1a1810', borderBottom: '1px solid #3d2e11' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24', marginBottom: 8 }}>Name Matching Warnings</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 8 }}>
+        <div className="px-7 py-3.5 bg-[#1a1810] border-b border-[#3d2e11]">
+          <div className="text-xs font-bold text-warning mb-2">Name Matching Warnings</div>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-2">
             {registry.warnings.map((w, i) => (
-              <div key={i} style={{
-                padding: '8px 12px', background: '#141924', borderRadius: 6,
-                border: '1px solid #2a3040', fontSize: 11,
-              }}>
-                <span style={{ color: '#fbbf24', fontWeight: 600 }}>[{w.source}]</span>{' '}
-                <span style={{ color: '#e8e6e1' }}>"{w.name}"</span>{' '}
-                <span style={{ color: '#888' }}>â€” {w.issue}</span>
-                {w.suggestion && <span style={{ color: '#60a5fa' }}> â†’ "{w.suggestion}"</span>}
+              <div key={i} className="px-3 py-2 bg-base-700 rounded-md border border-base-400 text-[11px]">
+                <span className="text-warning font-semibold">[{w.source}]</span>{' '}
+                <span className="text-text-primary">"{w.name}"</span>{' '}
+                <span className="text-text-secondary">&mdash; {w.issue}</span>
+                {w.suggestion && <span className="text-[#60a5fa]"> &rarr; "{w.suggestion}"</span>}
               </div>
             ))}
           </div>
@@ -594,57 +547,43 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
       {/* Edited data banner */}
       {useEdited && hasEditForRot && (
-        <div style={{
-          padding: '8px 28px', background: '#0c1a2a',
-          borderBottom: '1px solid #22d3ee25',
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', background: '#22d3ee',
-            boxShadow: '0 0 6px #22d3ee55',
-          }} />
-          <span style={{ fontSize: 11, color: '#22d3ee', fontWeight: 600 }}>
+        <div className="px-7 py-2 bg-[#0c1a2a] border-b border-accent-cyan/15 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-accent-cyan shadow-[0_0_6px_#22d3ee55]" />
+          <span className="text-[11px] text-accent-cyan font-semibold">
             Viewing edited schedule for Rotation {currentRot?.name}
           </span>
-          <span style={{ fontSize: 10, color: '#555' }}>
+          <span className="text-[10px] text-text-faint">
             &mdash; toggle off to compare with original
           </span>
         </div>
       )}
 
       {/* -- Schedule Grid -- */}
-      <div style={{ padding: '20px 28px', overflowX: 'auto' }}>
-        <table style={{ borderCollapse: 'separate', borderSpacing: 0, width: '100%', minWidth: isSingleGroup ? 800 : 1050 }}>
+      <div className="px-7 py-5 overflow-x-auto">
+        <table className="border-separate border-spacing-0 w-full" style={{ minWidth: isSingleGroup ? 800 : 1050 }}>
           <thead>
             {/* Day headers */}
             <tr>
-              {!isSingleGroup && <th style={{ width: 50 }} />}
+              {!isSingleGroup && <th className="w-[50px]" />}
               {daySlices.map((d, di) => (
                 <React.Fragment key={d.name}>
-                  {di > 0 && <th style={{ width: 20 }} />}
-                  <th colSpan={d.end - d.start} style={{
-                    textAlign: 'center', fontSize: 13, fontWeight: 700,
-                    color: dayColors[di],
-                    padding: '6px 0 2px',
-                    borderBottom: `2px solid ${dayColors[di]}30`,
-                    fontFamily: "'Playfair Display', serif", letterSpacing: 1,
-                  }}>{d.name}</th>
+                  {di > 0 && <th className="w-5" />}
+                  <th colSpan={d.end - d.start}
+                    className="text-center text-[13px] font-bold pt-1.5 pb-0.5 font-display tracking-[1px]"
+                    style={{ color: dayColors[di], borderBottom: `2px solid ${dayColors[di]}30` }}
+                  >{d.name}</th>
                 </React.Fragment>
               ))}
             </tr>
             {/* Time headers */}
             <tr>
-              {!isSingleGroup && <th style={{ fontSize: 10, color: '#666', textAlign: 'center', padding: '4px 6px 10px', fontWeight: 500 }}>Grp</th>}
+              {!isSingleGroup && <th className="text-[10px] text-text-muted text-center px-1.5 pb-2.5 pt-1 font-medium">Grp</th>}
               {timeSlots.map((s, si) => {
                 const isNewDay = dayBoundaries.has(si);
                 return (
                   <React.Fragment key={si}>
-                    {isNewDay && <th style={{ width: 20 }} />}
-                    <th style={{
-                      fontSize: 10, color: '#aaa', textAlign: 'center',
-                      padding: '4px 4px 10px', fontWeight: 500,
-                      fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap',
-                    }}>{s.time}</th>
+                    {isNewDay && <th className="w-5" />}
+                    <th className="text-[10px] text-[#aaa] text-center px-1 pb-2.5 pt-1 font-medium font-mono whitespace-nowrap">{s.time}</th>
                   </React.Fragment>
                 );
               })}
@@ -654,11 +593,9 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
             {displayGroups.map(({ group, idx: gi }) => (
               <tr key={gi}>
                 {!isSingleGroup && (
-                  <td onClick={() => setFocusGroup(gi)} title={`Focus Group ${gi + 1}`} style={{
-                    textAlign: 'center', fontWeight: 700, fontSize: 13, color: '#d4a847',
-                    padding: '0 6px', fontFamily: "'DM Mono', monospace",
-                    background: '#141924', position: 'sticky', left: 0, zIndex: 2, cursor: 'pointer',
-                  }}>{gi + 1}</td>
+                  <td onClick={() => setFocusGroup(gi)} title={`Focus Group ${gi + 1}`}
+                    className="text-center font-bold text-[13px] text-accent-gold px-1.5 font-mono bg-base-700 sticky left-0 z-[2] cursor-pointer"
+                  >{gi + 1}</td>
                 )}
                 {group.map((activity, si) => {
                   const meta = lookupMeta(activity, registry);
@@ -673,23 +610,18 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                   return (
                     <React.Fragment key={si}>
                       {isNewDay && (
-                        <td style={{ width: 20, background: 'transparent' }} />
+                        <td className="w-5 bg-transparent" />
                       )}
-                      <td style={{ padding: '2px 1px', verticalAlign: 'top', position: 'relative' }}>
+                      <td className="px-px py-0.5 align-top relative">
                         {dist !== null && (
-                          <div style={{ position: 'absolute', top: '50%', left: -2, transform: 'translate(-50%, -50%)', zIndex: 3 }}>
+                          <div className="absolute top-1/2 -left-0.5 -translate-x-1/2 -translate-y-1/2 z-[3]">
                             <DistanceBadge dist={dist} />
                           </div>
                         )}
                         {startDist !== null && (
-                          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translate(-50%, -50%)', zIndex: 3 }}>
-                            <div style={{
-                              fontSize: 8, color: '#60a5fa', background: '#112a3d',
-                              borderRadius: 3, padding: '1px 4px', fontWeight: 600,
-                              fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap',
-                              border: '1px solid #1e3a5f',
-                            }}>
-                              Ã¢â€“Â¸ {startDist}m
+                          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[3]">
+                            <div className="text-[8px] text-[#60a5fa] bg-[#112a3d] rounded-[3px] px-1 py-px font-semibold font-mono whitespace-nowrap border border-[#1e3a5f]">
+                              &#x25B8; {startDist}m
                             </div>
                           </div>
                         )}
@@ -697,33 +629,28 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                           onClick={() => setSelectedActivity(activity)}
                           onMouseEnter={() => setHoveredCell({ g: gi, s: si })}
                           onMouseLeave={() => setHoveredCell(null)}
+                          className="rounded-md flex flex-col justify-between transition-all duration-150 relative cursor-pointer"
                           style={{
-                            ...style, borderRadius: 6,
+                            ...style,
                             padding: isSingleGroup ? '10px 10px' : '6px 5px',
-                            minHeight: cellH, cursor: 'pointer',
-                            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                            transition: 'all 0.15s',
+                            minHeight: cellH,
                             transform: isHovered ? 'scale(1.04)' : 'scale(1)',
                             boxShadow: isHovered ? '0 4px 16px rgba(0,0,0,0.4)' : 'none',
-                            zIndex: isHovered ? 5 : 1, position: 'relative',
+                            zIndex: isHovered ? 5 : 1,
                             border: isHovered ? '1px solid rgba(255,255,255,0.3)' : meta ? '1px solid transparent' : '1px dashed #e74c3c55',
                           }}
                         >
-                          <div style={{ fontSize: isSingleGroup ? 13 : 10, fontWeight: 600, lineHeight: 1.2, marginBottom: 2 }}>
+                          <div className="font-semibold leading-[1.2] mb-0.5" style={{ fontSize: isSingleGroup ? 13 : 10 }}>
                             {shortName(activity)}
                           </div>
                           {isSingleGroup && meta && (
-                            <div style={{ fontSize: 9, opacity: 0.7, marginBottom: 2 }}>
-                              {meta.intensity} Ã‚Â· {meta.setup} setup
+                            <div className="text-[9px] opacity-70 mb-0.5">
+                              {meta.intensity} &middot; {meta.setup} setup
                             </div>
                           )}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                            <span style={{ fontSize: isSingleGroup ? 9 : 8, opacity: 0.75 }}>{(meta?.location || '').substring(0, 8)}</span>
-                            <span style={{
-                              fontSize: isSingleGroup ? 12 : 9, fontWeight: 700,
-                              fontFamily: "'DM Mono', monospace",
-                              background: 'rgba(0,0,0,0.2)', borderRadius: 3, padding: '1px 5px',
-                            }}>{meta?.value ?? '?'}</span>
+                          <div className="flex justify-between items-center mt-auto">
+                            <span className="opacity-75" style={{ fontSize: isSingleGroup ? 9 : 8 }}>{(meta?.location || '').substring(0, 8)}</span>
+                            <span className="font-bold font-mono bg-black/20 rounded-[3px] px-[5px] py-px" style={{ fontSize: isSingleGroup ? 12 : 9 }}>{meta?.value ?? '?'}</span>
                           </div>
                         </div>
                       </td>
@@ -738,11 +665,11 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
       {/* -- Per-Day Stats: Single Group -- */}
       {isSingleGroup && focusedDayStats && (
-        <div style={{ padding: '0 28px 28px' }}>
-          <h3 style={{ fontSize: 15, fontFamily: "'Playfair Display', serif", color: '#d4a847', marginBottom: 14 }}>
-            Group {focusGroup + 1} â€” Day-by-Day Breakdown
+        <div className="px-7 pb-7">
+          <h3 className="text-[15px] font-display text-accent-gold mb-3.5">
+            Group {focusGroup + 1} &mdash; Day-by-Day Breakdown
           </h3>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div className="flex gap-4 flex-wrap">
             {focusedDayStats.map((d, i) => (
               <DayStatsCard key={d.name} dayName={d.name} stats={d.stats} color={dayColors[i]} slotCount={d.end - d.start} />
             ))}
@@ -752,11 +679,11 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
       {/* -- Per-Day Stats: All Groups aggregate -- */}
       {!isSingleGroup && (
-        <div style={{ padding: '0 28px 28px' }}>
-          <h3 style={{ fontSize: 15, fontFamily: "'Playfair Display', serif", color: '#d4a847', marginBottom: 14 }}>
-            Per-Day Averages â€” All Groups
+        <div className="px-7 pb-7">
+          <h3 className="text-[15px] font-display text-accent-gold mb-3.5">
+            Per-Day Averages &mdash; All Groups
           </h3>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div className="flex gap-4 flex-wrap">
             {daySlices.map((d, di) => {
               const allStats = schedule.map(g => computeDayStats(g, d.start, d.end, registry, distMatrix, startLocation));
               const avgVal = Math.round(allStats.reduce((s, st) => s + st.avgVal, 0) / allStats.length);
@@ -764,28 +691,28 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
               const maxDistWorst = Math.max(...allStats.map(s => s.maxDist));
               const intensityFlags = allStats.filter(s => s.maxConsecutiveIntense >= 2).length;
               return (
-                <div key={d.name} style={{ flex: '1 1 220px', background: '#141924', borderRadius: 10, border: '1px solid #1e2636', padding: 18, minWidth: 200 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                    <div style={{ width: 4, height: 22, borderRadius: 2, background: dayColors[di] }} />
-                    <h4 style={{ margin: 0, fontSize: 15, fontFamily: "'Playfair Display', serif", color: dayColors[di] }}>{d.name}</h4>
-                    <span style={{ fontSize: 10, color: '#555', marginLeft: 'auto' }}>{d.end - d.start} slots</span>
+                <div key={d.name} className="flex-[1_1_220px] bg-base-700 rounded-[10px] border border-base-500 p-[18px] min-w-[200px]">
+                  <div className="flex items-center gap-2 mb-3.5">
+                    <div className="w-1 h-[22px] rounded-sm" style={{ background: dayColors[di] }} />
+                    <h4 className="m-0 text-[15px] font-display" style={{ color: dayColors[di] }}>{d.name}</h4>
+                    <span className="text-[10px] text-text-faint ml-auto">{d.end - d.start} slots</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Avg Value</div>
-                      <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'DM Mono', monospace", color: avgVal > 65 ? '#27ae60' : avgVal > 45 ? '#d4a847' : '#e74c3c' }}>{avgVal}</div>
+                      <div className="section-label text-text-muted mb-0.5">Avg Value</div>
+                      <div className="text-[22px] font-bold font-mono" style={{ color: avgVal > 65 ? '#27ae60' : avgVal > 45 ? '#d4a847' : '#e74c3c' }}>{avgVal}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Avg Walk</div>
-                      <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'DM Mono', monospace", color: '#aaa' }}>{avgDist}<span style={{ fontSize: 10 }}>m</span></div>
+                      <div className="section-label text-text-muted mb-0.5">Avg Walk</div>
+                      <div className="text-[22px] font-bold font-mono text-[#aaa]">{avgDist}<span className="text-[10px]">m</span></div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Worst Max Walk</div>
-                      <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: maxDistWorst > 600 ? '#e74c3c' : maxDistWorst > 400 ? '#d97706' : '#888' }}>{maxDistWorst}<span style={{ fontSize: 10 }}>m</span></div>
+                      <div className="section-label text-text-muted mb-0.5">Worst Max Walk</div>
+                      <div className="text-[17px] font-semibold font-mono" style={{ color: maxDistWorst > 600 ? '#e74c3c' : maxDistWorst > 400 ? '#d97706' : '#888' }}>{maxDistWorst}<span className="text-[10px]">m</span></div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Intensity Flags</div>
-                      <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: intensityFlags > 0 ? '#e74c3c' : '#27ae60' }}>{intensityFlags}<span style={{ fontSize: 10 }}> / {numGroups}</span></div>
+                      <div className="section-label text-text-muted mb-0.5">Intensity Flags</div>
+                      <div className="text-[17px] font-semibold font-mono" style={{ color: intensityFlags > 0 ? '#e74c3c' : '#27ae60' }}>{intensityFlags}<span className="text-[10px]"> / {numGroups}</span></div>
                     </div>
                   </div>
                 </div>
@@ -797,29 +724,31 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
 
       {/* Staffing Requirements */}
-      <div style={{ padding: '0 28px 28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-          <h3 style={{ fontSize: 15, fontFamily: "'Playfair Display', serif", color: '#d4a847', margin: 0 }}>
+      <div className="px-7 pb-7">
+        <div className="flex items-center gap-3 mb-3.5 flex-wrap">
+          <h3 className="text-[15px] font-display text-accent-gold m-0">
             Staffing Requirements
           </h3>
 
           {/* Group toggles */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button onClick={() => setStaffGroups(new Set(Array.from({ length: numGroups }, (_, i) => i)))} style={{
-              padding: '3px 8px', borderRadius: 3, fontSize: 9, fontWeight: 600,
-              border: '1px solid #2a3040', background: staffGroups.size === numGroups ? '#2a3040' : 'transparent',
-              color: staffGroups.size === numGroups ? '#d4a847' : '#555',
-              cursor: 'pointer', transition: 'all 0.2s',
-            }}>All</button>
-            <button onClick={() => setStaffGroups(new Set())} style={{
-              padding: '3px 8px', borderRadius: 3, fontSize: 9, fontWeight: 600,
-              border: '1px solid #2a3040', background: staffGroups.size === 0 ? '#2a3040' : 'transparent',
-              color: staffGroups.size === 0 ? '#d4a847' : '#555',
-              cursor: 'pointer', transition: 'all 0.2s',
-            }}>None</button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setStaffGroups(new Set(Array.from({ length: numGroups }, (_, i) => i)))}
+              className="px-2 py-[3px] rounded-[3px] text-[9px] font-semibold border border-base-400 cursor-pointer transition-all duration-200"
+              style={{
+                background: staffGroups.size === numGroups ? '#2a3040' : 'transparent',
+                color: staffGroups.size === numGroups ? '#d4a847' : '#555',
+              }}
+            >All</button>
+            <button onClick={() => setStaffGroups(new Set())}
+              className="px-2 py-[3px] rounded-[3px] text-[9px] font-semibold border border-base-400 cursor-pointer transition-all duration-200"
+              style={{
+                background: staffGroups.size === 0 ? '#2a3040' : 'transparent',
+                color: staffGroups.size === 0 ? '#d4a847' : '#555',
+              }}
+            >None</button>
           </div>
 
-          <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+          <div className="flex gap-[3px] items-center">
             {Array.from({ length: numGroups }, (_, gi) => {
               const on = staffGroups.has(gi);
               return (
@@ -829,27 +758,27 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                     if (next.has(gi)) next.delete(gi); else next.add(gi);
                     return next;
                   });
-                }} style={{
-                  padding: '3px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600,
-                  minWidth: 22, textAlign: 'center', cursor: 'pointer',
-                  fontFamily: "'DM Mono', monospace", transition: 'all 0.2s',
-                  border: on ? '1px solid #d4a847' : '1px solid #2a3040',
-                  background: on ? '#d4a847' : 'transparent',
-                  color: on ? '#0f1219' : '#555',
-                }}>{gi + 1}</button>
+                }}
+                  className="px-1.5 py-[3px] rounded-[3px] text-[9px] font-semibold min-w-[22px] text-center cursor-pointer font-mono transition-all duration-200"
+                  style={{
+                    border: on ? '1px solid #d4a847' : '1px solid #2a3040',
+                    background: on ? '#d4a847' : 'transparent',
+                    color: on ? '#0f1219' : '#555',
+                  }}
+                >{gi + 1}</button>
               );
             })}
           </div>
 
-          <span style={{ fontSize: 10, color: '#555' }}>
+          <span className="text-[10px] text-text-faint">
             {staffGroups.size} of {numGroups} groups
           </span>
 
           {/* Separator */}
-          <div style={{ width: 1, height: 20, background: '#2a3040' }} />
+          <div className="w-px h-5 bg-base-400" />
 
           {/* Day toggles */}
-          <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+          <div className="flex gap-[3px] items-center">
             {daySlices.map((d, di) => {
               const on = staffDays.has(di);
               // Get short day label (M, T, W, Th, F, etc.)
@@ -861,28 +790,28 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                     if (next.has(di)) next.delete(di); else next.add(di);
                     return next;
                   });
-                }} style={{
-                  padding: '3px 8px', borderRadius: 3, fontSize: 9, fontWeight: 600,
-                  minWidth: 24, textAlign: 'center', cursor: 'pointer',
-                  fontFamily: "'DM Mono', monospace", transition: 'all 0.2s',
-                  border: on ? `1px solid ${dayColors[di]}` : '1px solid #2a3040',
-                  background: on ? dayColors[di] : 'transparent',
-                  color: on ? '#0f1219' : '#555',
-                }}>{shortLabel}</button>
+                }}
+                  className="px-2 py-[3px] rounded-[3px] text-[9px] font-semibold min-w-[24px] text-center cursor-pointer font-mono transition-all duration-200"
+                  style={{
+                    border: on ? `1px solid ${dayColors[di]}` : '1px solid #2a3040',
+                    background: on ? dayColors[di] : 'transparent',
+                    color: on ? '#0f1219' : '#555',
+                  }}
+                >{shortLabel}</button>
               );
             })}
           </div>
 
-          <span style={{ fontSize: 10, color: '#555' }}>
+          <span className="text-[10px] text-text-faint">
             {staffDays.size} of {daySlices.length} days
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <div className="flex gap-4 flex-wrap">
           {daySlices.map((d, di) => {
             // Skip days that are not selected
             if (!staffDays.has(di)) return null;
-            
+
             const slotStaff = [];
             for (let si = d.start; si < d.end; si++) {
               let slotMin = 0, slotIdeal = 0;
@@ -901,40 +830,34 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
             const peakIdeal = slotStaff.length ? Math.max(...slotStaff.map(s => s.ideal)) : 0;
 
             return (
-              <div key={d.name} style={{
-                flex: '1 1 220px', background: '#141924', borderRadius: 10,
-                border: '1px solid #1e2636', padding: 18, minWidth: 200,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <div style={{ width: 4, height: 22, borderRadius: 2, background: dayColors[di] }} />
-                  <h4 style={{ margin: 0, fontSize: 15, fontFamily: "'Playfair Display', serif", color: dayColors[di] }}>{d.name}</h4>
-                  <span style={{ fontSize: 10, color: '#555', marginLeft: 'auto' }}>{d.end - d.start} slots</span>
+              <div key={d.name} className="flex-[1_1_220px] bg-base-700 rounded-[10px] border border-base-500 p-[18px] min-w-[200px]">
+                <div className="flex items-center gap-2 mb-3.5">
+                  <div className="w-1 h-[22px] rounded-sm" style={{ background: dayColors[di] }} />
+                  <h4 className="m-0 text-[15px] font-display" style={{ color: dayColors[di] }}>{d.name}</h4>
+                  <span className="text-[10px] text-text-faint ml-auto">{d.end - d.start} slots</span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div className="grid grid-cols-2 gap-3 mb-3.5">
                   <div>
-                    <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Peak Min</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'DM Mono', monospace", color: '#e8a838' }}>{peakMin}</div>
+                    <div className="section-label text-text-muted mb-0.5">Peak Min</div>
+                    <div className="text-[22px] font-bold font-mono text-[#e8a838]">{peakMin}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Peak Ideal</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'DM Mono', monospace", color: '#d4a847' }}>{peakIdeal}</div>
+                    <div className="section-label text-text-muted mb-0.5">Peak Ideal</div>
+                    <div className="text-[22px] font-bold font-mono text-accent-gold">{peakIdeal}</div>
                   </div>
                 </div>
 
-                <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Per Slot</div>
+                <div className="section-label text-text-muted mb-1.5">Per Slot</div>
                 {slotStaff.map(s => (
-                  <div key={s.si} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '4px 0', borderBottom: '1px solid #1e2636',
-                  }}>
-                    <span style={{ fontSize: 10, color: '#888', fontFamily: "'DM Mono', monospace" }}>{s.time}</span>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: '#e8a838' }}>
-                        {s.min}<span style={{ fontSize: 8, color: '#666', fontWeight: 400 }}> min</span>
+                  <div key={s.si} className="flex items-center justify-between py-1 border-b border-base-500">
+                    <span className="text-[10px] text-text-secondary font-mono">{s.time}</span>
+                    <div className="flex gap-2.5">
+                      <span className="text-[11px] font-semibold font-mono text-[#e8a838]">
+                        {s.min}<span className="text-[8px] text-text-muted font-normal"> min</span>
                       </span>
-                      <span style={{ fontSize: 11, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: '#d4a847' }}>
-                        {s.ideal}<span style={{ fontSize: 8, color: '#666', fontWeight: 400 }}> ideal</span>
+                      <span className="text-[11px] font-semibold font-mono text-accent-gold">
+                        {s.ideal}<span className="text-[8px] text-text-muted font-normal"> ideal</span>
                       </span>
                     </div>
                   </div>

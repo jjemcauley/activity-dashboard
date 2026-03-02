@@ -6,7 +6,7 @@ const FILE_TYPES = [
     label: 'Activity Metadata',
     description: 'Activity names, customer value, intensity, location zones, staff requirements',
     hint: 'The CDS / data sheet',
-    icon: 'ðŸ“‹',
+    icon: '\u{1F4CB}',
     required: true,
   },
   {
@@ -14,23 +14,23 @@ const FILE_TYPES = [
     label: 'Distance Matrix',
     description: 'Pairwise walking distances between activity locations (meters)',
     hint: 'The distances sheet',
-    icon: 'ðŸ“',
+    icon: '\u{1F4CF}',
     required: true,
   },
   {
     key: 'schedule',
     label: 'Schedule Matrix',
-    description: 'Activity rotations — groups Ã— time slots across days',
+    description: 'Activity rotations \u2014 groups \u00D7 time slots across days',
     hint: 'The 1-hour activity blocks',
-    icon: 'ðŸ“…',
+    icon: '\u{1F4C5}',
     required: true,
   },
   {
     key: 'similarities',
     label: 'Activity Similarities',
     description: 'Activity groupings for matrix generation constraints',
-    hint: 'Optional — for auto-generation',
-    icon: 'ðŸ”—',
+    hint: 'Optional \u2014 for auto-generation',
+    icon: '\u{1F517}',
     required: false,
   },
 ];
@@ -60,73 +60,55 @@ function DropZone({ fileType, file, onFile }) {
       onDragOver={handleDrag}
       onDragLeave={() => setDragOver(false)}
       onClick={() => inputRef.current?.click()}
-      style={{
-        flex: '1 1 280px',
-        minHeight: 180,
-        background: isLoaded ? '#1a2e1a' : dragOver ? '#1e2636' : '#141924',
-        border: `2px dashed ${isLoaded ? '#27ae60' : dragOver ? '#d4a847' : isOptional ? '#2a304080' : '#2a3040'}`,
-        borderRadius: 12,
-        padding: 24,
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        gap: 8,
-        opacity: isOptional && !isLoaded ? 0.75 : 1,
-      }}
+      className={`flex-[1_1_280px] min-h-[180px] border-2 border-dashed rounded-xl p-6 cursor-pointer transition-all duration-200 flex flex-col justify-center items-center text-center gap-2 ${
+        isLoaded
+          ? 'bg-[#1a2e1a] border-success'
+          : dragOver
+            ? 'bg-base-500 border-accent-gold'
+            : 'bg-base-700 border-base-400'
+      } ${isOptional && !isLoaded ? 'border-[#2a304080] opacity-75' : ''}`}
     >
       <input
         ref={inputRef}
         type="file"
         accept=".csv,.tsv,.txt"
-        style={{ display: 'none' }}
+        className="hidden"
         onChange={(e) => { if (e.target.files[0]) onFile(e.target.files[0]); }}
       />
 
-      <div style={{ fontSize: 32 }}>{isLoaded ? 'âœ…' : fileType.icon}</div>
+      <div className="text-[32px]">{isLoaded ? '\u2705' : fileType.icon}</div>
 
-      <div style={{
-        fontSize: 15, fontWeight: 700, color: isLoaded ? '#27ae60' : '#d4a847',
-        fontFamily: "'Playfair Display', serif",
-        display: 'flex', alignItems: 'center', gap: 6,
-      }}>
+      <div className={`text-[15px] font-bold font-display flex items-center gap-1.5 ${
+        isLoaded ? 'text-success' : 'text-accent-gold'
+      }`}>
         {fileType.label}
         {isOptional && (
-          <span style={{
-            fontSize: 9, fontWeight: 500, color: '#666',
-            background: '#2a3040', padding: '2px 6px', borderRadius: 3,
-          }}>
+          <span className="text-[9px] font-medium text-text-muted bg-base-400 px-1.5 py-0.5 rounded-[3px]">
             OPTIONAL
           </span>
         )}
       </div>
 
-      <div style={{ fontSize: 11, color: '#888', lineHeight: 1.4 }}>
+      <div className="text-[11px] text-text-secondary leading-[1.4]">
         {fileType.description}
       </div>
 
       {isLoaded ? (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 12, color: '#27ae60', fontWeight: 600 }}>
+        <div className="mt-2">
+          <div className="text-xs text-success font-semibold">
             {file.name}
           </div>
-          <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>
+          <div className="text-[10px] text-text-muted mt-0.5">
             {(file.size / 1024).toFixed(1)} KB — click to replace
           </div>
         </div>
       ) : (
-        <div style={{
-          marginTop: 8, fontSize: 11, color: '#666',
-          padding: '6px 14px', border: '1px solid #2a3040', borderRadius: 6,
-        }}>
+        <div className="mt-2 text-[11px] text-text-muted px-3.5 py-1.5 border border-base-400 rounded-md">
           Drop CSV here or click to browse
         </div>
       )}
 
-      <div style={{ fontSize: 10, color: '#555', fontStyle: 'italic', marginTop: 4 }}>
+      <div className="text-[10px] text-text-faint italic mt-1">
         {fileType.hint}
       </div>
     </div>
@@ -166,33 +148,24 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center', padding: 40,
-    }}>
-      <div style={{ maxWidth: 1200, width: '100%' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-10">
+      <div className="max-w-[1200px] w-full">
         {/* Title */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{
-            fontSize: 28, fontFamily: "'Playfair Display', serif",
-            color: '#d4a847', marginBottom: 8,
-          }}>
+        <div className="text-center mb-10">
+          <h1 className="text-[28px] font-display text-accent-gold mb-2">
             Fall Activity Matrix — SR 2026
           </h1>
-          <p style={{ fontSize: 14, color: '#888' }}>
+          <p className="text-sm text-text-secondary">
             Upload your CSV files to load the schedule dashboard
           </p>
         </div>
 
         {/* Required files section */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{
-            fontSize: 11, color: '#888', textTransform: 'uppercase',
-            letterSpacing: 1, marginBottom: 12, paddingLeft: 4,
-          }}>
+        <div className="mb-6">
+          <div className="text-[11px] text-text-secondary uppercase tracking-[1px] mb-3 pl-1">
             Required Files
           </div>
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+          <div className="flex gap-5 flex-wrap">
             {FILE_TYPES.filter(ft => ft.required).map(ft => (
               <DropZone
                 key={ft.key}
@@ -205,16 +178,13 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
         </div>
 
         {/* Optional files section */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{
-            fontSize: 11, color: '#666', textTransform: 'uppercase',
-            letterSpacing: 1, marginBottom: 12, paddingLeft: 4,
-          }}>
+        <div className="mb-8">
+          <div className="text-[11px] text-text-muted uppercase tracking-[1px] mb-3 pl-1">
             Optional Files
           </div>
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+          <div className="flex gap-5 flex-wrap">
             {FILE_TYPES.filter(ft => !ft.required).map(ft => (
-              <div key={ft.key} style={{ position: 'relative', flex: '1 1 280px', maxWidth: 320 }}>
+              <div key={ft.key} className="relative flex-[1_1_280px] max-w-[320px]">
                 <DropZone
                   fileType={ft}
                   file={files[ft.key]}
@@ -223,17 +193,10 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
                 {files[ft.key] && (
                   <button
                     onClick={(e) => { e.stopPropagation(); clearFile(ft.key); }}
-                    style={{
-                      position: 'absolute', top: 8, right: 8,
-                      width: 24, height: 24, borderRadius: '50%',
-                      border: '1px solid #dc262640', background: '#1a1010',
-                      color: '#dc2626', fontSize: 14, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.15s',
-                    }}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full border border-[#dc262640] bg-[#1a1010] text-error text-sm cursor-pointer flex items-center justify-center transition-all duration-150"
                     title="Remove file"
                   >
-                    Ã—
+                    &times;
                   </button>
                 )}
               </div>
@@ -242,18 +205,15 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <div className="flex justify-center gap-4 flex-wrap">
           <button
             onClick={handleLoad}
             disabled={!requiredReady}
-            style={{
-              padding: '12px 36px', borderRadius: 8, border: 'none',
-              background: requiredReady ? '#d4a847' : '#2a3040',
-              color: requiredReady ? '#0f1219' : '#555',
-              fontSize: 14, fontWeight: 700, cursor: requiredReady ? 'pointer' : 'not-allowed',
-              transition: 'all 0.2s',
-              fontFamily: "'DM Sans', sans-serif",
-            }}
+            className={`px-9 py-3 rounded-lg border-none text-sm font-bold font-sans transition-all duration-200 ${
+              requiredReady
+                ? 'bg-accent-gold text-base-800 cursor-pointer'
+                : 'bg-base-400 text-text-faint cursor-not-allowed'
+            }`}
           >
             Load Dashboard
           </button>
@@ -261,12 +221,7 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
           {hasExisting && (
             <button
               onClick={() => onFilesReady(null)}
-              style={{
-                padding: '12px 28px', borderRadius: 8,
-                border: '1px solid #2a3040', background: 'transparent',
-                color: '#888', fontSize: 13, fontWeight: 500, cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
+              className="px-7 py-3 rounded-lg border border-base-400 bg-transparent text-text-secondary text-[13px] font-medium cursor-pointer transition-all duration-200"
             >
               Use Previously Loaded Data
             </button>
@@ -274,13 +229,11 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
         </div>
 
         {/* Status summary */}
-        <div style={{
-          marginTop: 20, textAlign: 'center', fontSize: 11, color: '#666',
-        }}>
+        <div className="mt-5 text-center text-[11px] text-text-muted">
           {requiredReady ? (
-            <span style={{ color: '#27ae60' }}>
-              âœ“ All required files loaded
-              {files.similarities && <span style={{ color: '#22d3ee' }}> + similarities data</span>}
+            <span className="text-success">
+              &#10003; All required files loaded
+              {files.similarities && <span className="text-accent-cyan"> + similarities data</span>}
             </span>
           ) : (
             <span>
@@ -295,34 +248,24 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
 
         {/* Error */}
         {error && (
-          <div style={{
-            marginTop: 20, padding: '12px 20px', borderRadius: 8,
-            background: '#3d1111', border: '1px solid #ef4444',
-            color: '#f87171', fontSize: 12, textAlign: 'center',
-          }}>
+          <div className="mt-5 px-5 py-3 rounded-lg bg-[#3d1111] border border-[#ef4444] text-accent-red text-xs text-center">
             {error}
           </div>
         )}
 
         {/* File format hints */}
-        <div style={{
-          marginTop: 48, padding: 20, background: '#141924',
-          borderRadius: 10, border: '1px solid #1e2636',
-        }}>
-          <h3 style={{
-            fontSize: 13, color: '#d4a847', marginBottom: 10,
-            fontFamily: "'Playfair Display', serif",
-          }}>
+        <div className="mt-12 p-5 bg-base-700 rounded-[10px] border border-base-500">
+          <h3 className="text-[13px] text-accent-gold mb-2.5 font-display">
             Notes on File Compatibility
           </h3>
-          <div style={{ fontSize: 11, color: '#888', lineHeight: 1.6 }}>
+          <div className="text-[11px] text-text-secondary leading-[1.6]">
             Activity names may vary between files (e.g., location info in parentheses,
             apostrophe variants, typos). The dashboard will automatically match names
             across files using fuzzy matching and flag any discrepancies for review.
             Data is saved in your browser and persists across reloads — no server needed.
           </div>
-          <div style={{ fontSize: 11, color: '#666', lineHeight: 1.6, marginTop: 12, paddingTop: 12, borderTop: '1px solid #1e2636' }}>
-            <strong style={{ color: '#22d3ee' }}>Similarities file:</strong> Used for the matrix auto-generation feature.
+          <div className="text-[11px] text-text-muted leading-[1.6] mt-3 pt-3 border-t border-base-500">
+            <strong className="text-accent-cyan">Similarities file:</strong> Used for the matrix auto-generation feature.
             Should contain activity names and their similarity groupings (e.g., "High Ropes" activities grouped together).
           </div>
         </div>

@@ -1,50 +1,37 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { DAY_COLORS, valueColor, valueTextColor } from "../constants/colors.js";
+import { DAY_COLORS, CYCLE_COLORS, valueColor, valueTextColor } from "../constants/colors.js";
 import { getDistance, lookupMeta, shortName } from "../utils/parsers.js";
 
-/* â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–
+/* ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
    Constants
-    */
-
-const CYCLE_COLORS = [
-  "#22d3ee",
-  "#f472b6",
-  "#a78bfa",
-  "#34d399",
-  "#fbbf24",
-  "#fb923c",
-  "#818cf8",
-  "#f87171",
-  "#2dd4bf",
-  "#e879f9",
-];
+    */
 
 const OPS = {
   "row-swap": {
     label: "Row Swap",
-    icon: "â‡…",
+    icon: "⇅",
     desc: "Swap two groups' entire schedules",
   },
   "col-swap": {
     label: "Column Swap",
-    icon: "â‡†",
+    icon: "⇆",
     desc: "Swap two time slots across the schedule",
   },
   "symbol-swap": {
     label: "Symbol Swap",
-    icon: "âŸ²",
+    icon: "⟲",
     desc: "Globally trade every instance of two activities",
   },
   "cycle-switch": {
     label: "Cycle Switch",
-    icon: "âŸ³",
+    icon: "⟳",
     desc: "Decompose and selectively switch cycles between two groups",
   },
 };
 
-/* â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–
+/* ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
    Pure logic helpers
-   â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â– */
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ */
 
 function cloneGroups(groups) {
   return groups.map((g) => [...g]);
@@ -103,51 +90,9 @@ function dayStats(group, start, end, registry, distMatrix) {
   return { avg, totalDist, maxDist };
 }
 
-/* â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–
-   Inject keyframes once
-   â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â– */
-
-let styleInjected = false;
-function injectStyles() {
-  if (styleInjected) return;
-  styleInjected = true;
-  const s = document.createElement("style");
-  s.textContent = `
-    @keyframes edFlash {
-      0%   { box-shadow: 0 0 0 0 rgba(34,211,238,0.5); }
-      100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
-    }
-    @keyframes edSlideIn {
-      from { opacity:0; transform:translateY(-6px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-    @keyframes edPulse {
-      0%,100% { opacity:1; }
-      50%     { opacity:0.6; }
-    }
-    .ed-cell {
-      transition: border-color 0.2s, transform 0.12s, box-shadow 0.2s;
-      will-change: transform;
-    }
-    .ed-cell:hover {
-      transform: scale(1.05);
-      z-index: 6 !important;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-    .ed-fadein { animation: edSlideIn 0.18s ease-out both; }
-    .ed-btn {
-      transition: all 0.15s;
-      cursor: pointer;
-      user-select: none;
-    }
-    .ed-btn:hover { filter: brightness(1.15); }
-  `;
-  document.head.appendChild(s);
-}
-
-/* â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–
+/* ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
    LiveEditor Component
-   â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â– */
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ */
 
 export default function LiveEditor({
   registry,
@@ -158,8 +103,6 @@ export default function LiveEditor({
   onSave,
   savedEdits,
 }) {
-  useEffect(injectStyles, []);
-
   const [rotIdx, setRotIdx] = useState(0);
   const original = useMemo(
     () => rotations[rotIdx]?.groups || [],
@@ -442,55 +385,26 @@ export default function LiveEditor({
   const rotName = rotations[rotIdx]?.name || "?";
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0f1219",
-        color: "#e8e6e1",
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
-      {/* â–â–â– Toolbar â–â–â– */}
-      <div
-        style={{
-          padding: "8px 28px",
-          background: "#111827",
-          borderBottom: "1px solid #1a2030",
-          display: "flex",
-          gap: 6,
-          alignItems: "center",
-          flexWrap: "wrap",
-        }}
-      >
+    <div className="min-h-screen bg-base-800 text-text-primary font-sans">
+      {/* ▓▓▓ Toolbar ▓▓▓ */}
+      <div className="flex flex-wrap items-center gap-1.5 px-7 py-2 bg-[#111827] border-b border-[#1a2030]">
+
         {/* Rotation selector */}
         {rotations.map((r, i) => (
           <button
             key={i}
             onClick={() => setRotIdx(i)}
-            className="ed-btn"
-            style={{
-              padding: "6px 14px",
-              borderRadius: 5,
-              fontSize: 11,
-              fontWeight: 600,
-              border: rotIdx === i ? "1px solid #22d3ee" : "1px solid #1e2636",
-              background: rotIdx === i ? "#22d3ee" : "transparent",
-              color: rotIdx === i ? "#0f1219" : "#666",
-            }}
+            className={`ed-btn rounded-[5px] px-3.5 py-1.5 text-[11px] font-semibold ${
+              rotIdx === i
+                ? "border border-accent-cyan bg-accent-cyan text-base-800"
+                : "border border-base-500 bg-transparent text-text-muted"
+            }`}
           >
             Rot {r.name}
           </button>
         ))}
 
-        <div
-          style={{
-            width: 1,
-            height: 24,
-            background: "#1e2636",
-            margin: "0 4px",
-            flexShrink: 0,
-          }}
-        />
+        <div className="mx-1 h-6 w-px shrink-0 bg-base-500" />
 
         {/* Operation buttons */}
         {Object.entries(OPS).map(([key, { label, icon }]) => {
@@ -499,99 +413,51 @@ export default function LiveEditor({
             <button
               key={key}
               onClick={() => selectOp(key)}
-              className="ed-btn"
-              style={{
-                padding: "7px 14px",
-                borderRadius: 6,
-                fontSize: 11,
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                border: active ? "1px solid #22d3ee" : "1px solid #1e2636",
-                background: active ? "rgba(34,211,238,0.08)" : "transparent",
-                color: active ? "#22d3ee" : "#666",
-              }}
+              className={`ed-btn flex items-center gap-[5px] rounded-[6px] px-3.5 py-[7px] text-[11px] font-semibold ${
+                active
+                  ? "border border-accent-cyan bg-accent-cyan/[0.08] text-accent-cyan"
+                  : "border border-base-500 bg-transparent text-text-muted"
+              }`}
             >
-              <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
+              <span className="text-sm leading-none">{icon}</span>
               {label}
             </button>
           );
         })}
 
-        <div
-          style={{
-            width: 1,
-            height: 24,
-            background: "#1e2636",
-            margin: "0 4px",
-            flexShrink: 0,
-          }}
-        />
+        <div className="mx-1 h-6 w-px shrink-0 bg-base-500" />
 
         {/* Undo / redo */}
         <button
           onClick={undo}
           disabled={!history.length}
-          className="ed-btn"
-          style={{
-            padding: "5px 10px",
-            borderRadius: 5,
-            fontSize: 10,
-            fontWeight: 600,
-            border: "1px solid #1e2636",
-            background: "transparent",
-            color: history.length ? "#888" : "#333",
-            opacity: history.length ? 1 : 0.4,
-          }}
+          className={`ed-btn rounded-[5px] border border-base-500 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold ${
+            history.length ? "text-text-secondary" : "text-base-300 opacity-40"
+          }`}
         >
-          â†© Undo
+          ↩ Undo
         </button>
         <button
           onClick={redo}
           disabled={!future.length}
-          className="ed-btn"
-          style={{
-            padding: "5px 10px",
-            borderRadius: 5,
-            fontSize: 10,
-            fontWeight: 600,
-            border: "1px solid #1e2636",
-            background: "transparent",
-            color: future.length ? "#888" : "#333",
-            opacity: future.length ? 1 : 0.4,
-          }}
+          className={`ed-btn rounded-[5px] border border-base-500 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold ${
+            future.length ? "text-text-secondary" : "text-base-300 opacity-40"
+          }`}
         >
-          â†ª Redo
+          ↪ Redo
         </button>
 
         {changes > 0 && (
           <button
             onClick={revertAll}
-            className="ed-btn"
-            style={{
-              padding: "5px 10px",
-              borderRadius: 5,
-              fontSize: 10,
-              fontWeight: 600,
-              border: "1px solid #dc262640",
-              background: "transparent",
-              color: "#dc2626",
-            }}
+            className="ed-btn rounded-[5px] border border-error/25 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold text-error"
           >
-            âœ• Revert
+            ✕ Revert
           </button>
         )}
 
         {changes > 0 && (
-          <span
-            style={{
-              fontSize: 10,
-              color: "#fbbf24",
-              fontWeight: 600,
-              marginLeft: 4,
-            }}
-          >
+          <span className="ml-1 text-[10px] font-semibold text-warning">
             {changes} changed
           </span>
         )}
@@ -600,17 +466,7 @@ export default function LiveEditor({
         {changes > 0 && onSave && (
           <button
             onClick={() => onSave(rotIdx, draft)}
-            className="ed-btn"
-            style={{
-              padding: "5px 12px",
-              borderRadius: 5,
-              fontSize: 10,
-              fontWeight: 600,
-              border: "1px solid #27ae60",
-              background: "rgba(39,174,96,0.08)",
-              color: "#27ae60",
-              marginLeft: 2,
-            }}
+            className="ed-btn ml-0.5 rounded-[5px] border border-success bg-success/[0.08] px-3 py-[5px] text-[10px] font-semibold text-success"
           >
             &#x2714; Save to Dashboard
           </button>
@@ -618,64 +474,37 @@ export default function LiveEditor({
 
         {/* Indicator: edits are saved for this rotation */}
         {changes === 0 && savedEdits?.[rotIdx] && (
-          <span
-            style={{
-              fontSize: 10,
-              color: "#27ae60",
-              fontWeight: 600,
-              marginLeft: 4,
-            }}
-          >
+          <span className="ml-1 text-[10px] font-semibold text-success">
             &#x2714; Saved edits active
           </span>
         )}
 
         {/* Context hint */}
         {op && (
-          <div
-            className="ed-fadein"
-            style={{
-              marginLeft: "auto",
-              fontSize: 11,
-              color: "#555",
-              fontStyle: "italic",
-            }}
-          >
+          <div className="ed-fadein ml-auto text-[11px] italic text-text-faint">
             {OPS[op].desc}
           </div>
         )}
       </div>
 
-      {/* â–â–â– Main layout â–â–â– */}
-      <div style={{ display: "flex" }}>
+      {/* ▓▓▓ Main layout ▓▓▓ */}
+      <div className="flex">
         {/* -- Grid -- */}
-        <div style={{ flex: 1, padding: "16px 24px", overflowX: "auto" }}>
-          <table
-            style={{
-              borderCollapse: "separate",
-              borderSpacing: 0,
-              width: "100%",
-              minWidth: 1050,
-            }}
-          >
+        <div className="flex-1 overflow-x-auto px-6 py-4">
+          <table className="w-full min-w-[1050px] border-separate border-spacing-0">
             <thead>
               {/* Day row */}
               <tr>
-                <th style={{ width: 36 }} />
+                <th className="w-9" />
                 {daySlices.map((d, di) => (
                   <React.Fragment key={d.name}>
-                    {di > 0 && <th style={{ width: 18 }} />}
+                    {di > 0 && <th className="w-[18px]" />}
                     <th
                       colSpan={d.end - d.start}
+                      className="text-center text-xs font-bold font-display tracking-wide pb-0.5 pt-[5px]"
                       style={{
-                        textAlign: "center",
-                        fontSize: 12,
-                        fontWeight: 700,
                         color: dayColorMap[d.name],
-                        padding: "5px 0 2px",
                         borderBottom: `2px solid ${dayColorMap[d.name]}25`,
-                        fontFamily: "'Playfair Display', serif",
-                        letterSpacing: 1,
                       }}
                     >
                       {d.name}
@@ -686,9 +515,7 @@ export default function LiveEditor({
 
               {/* Time slot row */}
               <tr>
-                <th
-                  style={{ fontSize: 9, color: "#555", padding: "3px 4px 8px" }}
-                >
+                <th className="text-[9px] text-text-faint px-1 pb-2 pt-[3px]">
                   Grp
                 </th>
                 {timeSlots.map((s, si) => {
@@ -696,20 +523,12 @@ export default function LiveEditor({
                   const isSelCol = op === "col-swap" && pick1 === si;
                   return (
                     <React.Fragment key={si}>
-                      {isGap && <th style={{ width: 18 }} />}
+                      {isGap && <th className="w-[18px]" />}
                       <th
                         onClick={() => onSlotClick(si)}
-                        style={{
-                          fontSize: 9,
-                          textAlign: "center",
-                          padding: "3px 3px 8px",
-                          fontFamily: "'DM Mono', monospace",
-                          whiteSpace: "nowrap",
-                          color: isSelCol ? "#22d3ee" : "#777",
-                          cursor: op === "col-swap" ? "pointer" : "default",
-                          fontWeight: isSelCol ? 700 : 400,
-                          transition: "color 0.15s",
-                        }}
+                        className={`text-[9px] text-center px-[3px] pb-2 pt-[3px] font-mono whitespace-nowrap transition-colors duration-150 ${
+                          isSelCol ? "text-accent-cyan font-bold" : "font-normal text-[#777]"
+                        } ${op === "col-swap" ? "cursor-pointer" : "cursor-default"}`}
                       >
                         {s.time}
                       </th>
@@ -725,32 +544,16 @@ export default function LiveEditor({
                   {/* Group label */}
                   <td
                     onClick={() => onGroupClick(gi)}
-                    style={{
-                      textAlign: "center",
-                      fontWeight: 700,
-                      fontSize: 12,
-                      padding: "0 4px",
-                      fontFamily: "'DM Mono', monospace",
-                      background: "#111827",
-                      position: "sticky",
-                      left: 0,
-                      zIndex: 3,
-                      cursor:
-                        op === "row-swap" || op === "cycle-switch"
-                          ? "pointer"
-                          : "default",
-                      transition: "all 0.15s",
-                      color:
-                        (pick1 === gi || pick2 === gi) &&
-                        (op === "row-swap" || op === "cycle-switch")
-                          ? "#22d3ee"
-                          : "#d4a847",
-                      borderRight:
-                        (pick1 === gi || pick2 === gi) &&
-                        (op === "row-swap" || op === "cycle-switch")
-                          ? "2px solid #22d3ee"
-                          : "2px solid transparent",
-                    }}
+                    className={`text-center font-bold text-xs px-1 font-mono sticky left-0 z-[3] transition-all duration-150 bg-[#111827] ${
+                      op === "row-swap" || op === "cycle-switch"
+                        ? "cursor-pointer"
+                        : "cursor-default"
+                    } ${
+                      (pick1 === gi || pick2 === gi) &&
+                      (op === "row-swap" || op === "cycle-switch")
+                        ? "text-accent-cyan border-r-2 border-r-accent-cyan"
+                        : "text-accent-gold border-r-2 border-r-transparent"
+                    }`}
                   >
                     {gi + 1}
                   </td>
@@ -780,35 +583,14 @@ export default function LiveEditor({
 
                     return (
                       <React.Fragment key={si}>
-                        {isGap && <td style={{ width: 18 }} />}
-                        <td
-                          style={{
-                            padding: "2px 1px",
-                            verticalAlign: "top",
-                            position: "relative",
-                          }}
-                        >
+                        {isGap && <td className="w-[18px]" />}
+                        <td className="px-px py-0.5 align-top relative">
                           {/* Distance badge */}
                           {dist !== null && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: "50%",
-                                left: -1,
-                                transform: "translate(-50%, -50%)",
-                                zIndex: 4,
-                              }}
-                            >
+                            <div className="absolute top-1/2 -left-px -translate-x-1/2 -translate-y-1/2 z-[4]">
                               <div
+                                className="text-[8px] rounded-[3px] px-[3px] font-semibold font-mono leading-[13px] min-w-[24px] text-center"
                                 style={{
-                                  fontSize: 8,
-                                  borderRadius: 3,
-                                  padding: "0px 3px",
-                                  fontWeight: 600,
-                                  fontFamily: "'DM Mono', monospace",
-                                  lineHeight: "13px",
-                                  minWidth: 24,
-                                  textAlign: "center",
                                   color:
                                     dist > 600
                                       ? "#dc2626"
@@ -833,22 +615,16 @@ export default function LiveEditor({
                           )}
 
                           <div
-                            className="ed-cell"
+                            className={`ed-cell flex flex-col justify-between rounded-[6px] p-[5px] min-h-[50px] relative ${
+                              op ? "cursor-pointer" : "cursor-default"
+                            }`}
                             onClick={() => onCellClick(gi, si)}
                             style={{
                               background: overlay
                                 ? `linear-gradient(${overlay},${overlay}),${bg}`
                                 : bg,
                               color: fg,
-                              borderRadius: 6,
-                              padding: "5px 5px",
-                              minHeight: 50,
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "space-between",
                               border: borderFor(state),
-                              position: "relative",
-                              cursor: op ? "pointer" : "default",
                               opacity: isPreviewed ? 0.55 : 1,
                               animation: flashKeys.has(`${gi}-${si}`)
                                 ? "edFlash 0.5s ease-out"
@@ -857,70 +633,27 @@ export default function LiveEditor({
                           >
                             {/* Changed dot */}
                             {isChanged && !isPreviewed && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  top: 3,
-                                  right: 3,
-                                  width: 4,
-                                  height: 4,
-                                  borderRadius: "50%",
-                                  background: "#fbbf24",
-                                }}
-                              />
+                              <div className="absolute top-[3px] right-[3px] w-1 h-1 rounded-full bg-warning" />
                             )}
 
                             {/* Preview label */}
                             {isPreviewed && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  top: 1,
-                                  left: 3,
-                                  fontSize: 6,
-                                  color: "#22d3ee",
-                                  fontWeight: 700,
-                                  letterSpacing: 0.5,
-                                  textTransform: "uppercase",
-                                  animation:
-                                    "edPulse 1.5s ease-in-out infinite",
-                                }}
-                              >
+                              <div className="absolute top-px left-[3px] text-[6px] font-bold tracking-wide uppercase text-accent-cyan animate-[edPulse_1.5s_ease-in-out_infinite]">
+
                                 preview
                               </div>
                             )}
 
                             <div
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 600,
-                                lineHeight: 1.2,
-                                marginTop: isPreviewed ? 6 : 0,
-                              }}
+                              className={`text-[10px] font-semibold leading-[1.2] ${isPreviewed ? "mt-1.5" : "mt-0"}`}
                             >
                               {shortName(val)}
                             </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginTop: "auto",
-                              }}
-                            >
-                              <span style={{ fontSize: 7, opacity: 0.65 }}>
+                            <div className="flex justify-between items-center mt-auto">
+                              <span className="text-[7px] opacity-65">
                                 {(meta?.location || "").substring(0, 8)}
                               </span>
-                              <span
-                                style={{
-                                  fontSize: 8,
-                                  fontWeight: 700,
-                                  fontFamily: "'DM Mono', monospace",
-                                  background: "rgba(0,0,0,0.18)",
-                                  borderRadius: 3,
-                                  padding: "0 4px",
-                                }}
-                              >
+                              <span className="text-[8px] font-bold font-mono bg-black/18 rounded-[3px] px-1">
                                 {meta?.value ?? "?"}
                               </span>
                             </div>
@@ -938,35 +671,16 @@ export default function LiveEditor({
         {/* -- Side Panel -- */}
         {op && (
           <div
-            className="ed-fadein"
-            style={{
-              width: 270,
-              flexShrink: 0,
-              background: "#111827",
-              borderLeft: "1px solid #1a2030",
-              padding: "16px 18px",
-              overflowY: "auto",
-              maxHeight: "calc(100vh - 80px)",
-              fontSize: 12,
-            }}
+            className="ed-fadein w-[270px] shrink-0 overflow-y-auto p-4 px-[18px] text-xs bg-[#111827] border-l border-[#1a2030] max-h-[calc(100vh-80px)]"
           >
-            <h3
-              style={{
-                margin: "0 0 12px",
-                fontSize: 14,
-                fontFamily: "'Playfair Display', serif",
-                color: "#22d3ee",
-              }}
-            >
+            <h3 className="mb-3 text-sm font-display text-accent-cyan">
               {OPS[op].icon} {OPS[op].label}
             </h3>
 
             {/* -- Row Swap guide -- */}
             {op === "row-swap" && (
               <div>
-                <p
-                  style={{ color: "#666", lineHeight: 1.5, margin: "0 0 14px" }}
-                >
+                <p className="mb-3.5 leading-relaxed text-text-muted">
                   Click a group number, then another. Their entire rows swap —
                   always valid.
                 </p>
@@ -982,9 +696,7 @@ export default function LiveEditor({
             {/* -- Column Swap guide -- */}
             {op === "col-swap" && (
               <div>
-                <p
-                  style={{ color: "#666", lineHeight: 1.5, margin: "0 0 14px" }}
-                >
+                <p className="mb-3.5 leading-relaxed text-text-muted">
                   Click a time slot header, then another. All groups swap in
                   those columns. Works across days.
                 </p>
@@ -1000,44 +712,20 @@ export default function LiveEditor({
             {/* -- Symbol Swap guide -- */}
             {op === "symbol-swap" && (
               <div>
-                <p
-                  style={{ color: "#666", lineHeight: 1.5, margin: "0 0 14px" }}
-                >
+                <p className="mb-3.5 leading-relaxed text-text-muted">
                   Click any cell to select activity A, then click a cell with
                   activity B. Every instance globally swaps.
                 </p>
                 {pick1 && (
-                  <div
-                    className="ed-fadein"
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid #f472b644",
-                      background: "#1f0f1a",
-                      marginBottom: 10,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 9,
-                        color: "#666",
-                        textTransform: "uppercase",
-                        letterSpacing: 0.8,
-                        marginBottom: 3,
-                      }}
-                    >
+                  <div className="ed-fadein mb-2.5 rounded-lg border border-accent-pink/25 bg-[#1f0f1a] px-3 py-2.5">
+
+                    <div className="mb-[3px] text-[9px] uppercase tracking-wider text-text-muted">
                       Selected
                     </div>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#f472b6",
-                      }}
-                    >
+                    <div className="text-[13px] font-semibold text-accent-pink">
                       {shortName(pick1)}
                     </div>
-                    <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>
+                    <div className="mt-[3px] text-[10px] text-text-faint">
                       Now click a different activity
                     </div>
                   </div>
@@ -1048,9 +736,7 @@ export default function LiveEditor({
             {/* -- Cycle Switch guide + controls -- */}
             {op === "cycle-switch" && (
               <div>
-                <p
-                  style={{ color: "#666", lineHeight: 1.5, margin: "0 0 14px" }}
-                >
+                <p className="mb-3.5 leading-relaxed text-text-muted">
                   Click two group numbers. Their permutation decomposes into
                   independent cycles you can toggle.
                 </p>
@@ -1065,22 +751,13 @@ export default function LiveEditor({
                 {/* Cycle list */}
                 {cycles.length > 0 && (
                   <div className="ed-fadein">
-                    <div
-                      style={{
-                        fontSize: 10,
-                        color: "#888",
-                        marginBottom: 10,
-                        padding: "7px 10px",
-                        background: "#0c1520",
-                        borderRadius: 6,
-                        border: "1px solid #1a2030",
-                      }}
-                    >
+                    <div className="mb-2.5 rounded-[6px] bg-[#0c1520] border border-[#1a2030] px-2.5 py-[7px] text-[10px] text-text-secondary">
+
                       Groups{" "}
-                      <strong style={{ color: "#22d3ee" }}>{pick1 + 1}</strong>{" "}
-                      â†”{" "}
-                      <strong style={{ color: "#22d3ee" }}>{pick2 + 1}</strong>
-                      {" Â· "}
+                      <strong className="text-accent-cyan">{pick1 + 1}</strong>{" "}
+                      ↔{" "}
+                      <strong className="text-accent-cyan">{pick2 + 1}</strong>
+                      {" · "}
                       {cycles.length} cycle{cycles.length !== 1 ? "s" : ""}
                     </div>
 
@@ -1091,104 +768,64 @@ export default function LiveEditor({
                         <div
                           key={ci}
                           onClick={() => toggleCycle(ci)}
-                          className="ed-btn"
+                          className="ed-btn mb-1.5 overflow-hidden rounded-lg transition-all duration-200"
                           style={{
-                            marginBottom: 6,
-                            borderRadius: 8,
-                            overflow: "hidden",
                             border: `1px solid ${on ? color : "#1a2030"}`,
                             background: on ? `${color}08` : "transparent",
-                            transition: "all 0.2s",
                           }}
                         >
                           {/* Header */}
-                          <div
-                            style={{
-                              padding: "8px 10px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 8,
-                            }}
-                          >
+                          <div className="flex items-center gap-2 px-2.5 py-2">
                             <div
+                              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] transition-all duration-150"
                               style={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: 3,
-                                flexShrink: 0,
                                 border: `2px solid ${on ? color : "#333"}`,
                                 background: on ? color : "transparent",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "all 0.15s",
                               }}
                             >
                               {on && (
-                                <span
-                                  style={{
-                                    color: "#0f1219",
-                                    fontSize: 10,
-                                    fontWeight: 800,
-                                    lineHeight: 1,
-                                  }}
-                                >
-                                  âœ”
+                                <span className="text-[10px] font-extrabold leading-none text-base-800">
+                                  ✓
                                 </span>
                               )}
                             </div>
                             <div>
                               <div
-                                style={{ fontSize: 11, fontWeight: 600, color }}
+                                className="text-[11px] font-semibold"
+                                style={{ color }}
                               >
                                 {cyc.length}-cycle
                               </div>
-                              <div style={{ fontSize: 8, color: "#555" }}>
+                              <div className="text-[8px] text-text-faint">
                                 cols: {cyc.map((s) => s.col + 1).join(", ")}
                               </div>
                             </div>
                           </div>
 
                           {/* Chain visualization */}
-                          <div
-                            style={{
-                              padding: "2px 10px 8px",
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: 2,
-                              alignItems: "center",
-                            }}
-                          >
+                          <div className="flex flex-wrap items-center gap-0.5 px-2.5 pb-2 pt-0.5">
                             {cyc.map((step, i) => (
                               <React.Fragment key={i}>
                                 <span
+                                  className="rounded-[3px] px-[5px] py-px text-[8px] font-medium font-mono"
                                   style={{
-                                    fontSize: 8,
-                                    padding: "1px 5px",
-                                    borderRadius: 3,
                                     background: `${color}18`,
                                     color,
-                                    fontWeight: 500,
-                                    fontFamily: "'DM Mono', monospace",
                                     border: `1px solid ${color}28`,
                                   }}
                                 >
                                   {shortName(step.fromA)}
                                 </span>
-                                <span style={{ fontSize: 9, color: "#444" }}>
+                                <span className="text-[9px] text-text-dim">
                                   →
                                 </span>
                               </React.Fragment>
                             ))}
                             <span
+                              className="rounded-[3px] px-[5px] py-px text-[8px] font-medium font-mono"
                               style={{
-                                fontSize: 8,
-                                padding: "1px 5px",
-                                borderRadius: 3,
                                 background: `${color}18`,
                                 color,
-                                fontWeight: 500,
-                                fontFamily: "'DM Mono', monospace",
                                 border: `1px solid ${color}28`,
                               }}
                             >
@@ -1201,46 +838,17 @@ export default function LiveEditor({
 
                     {/* Impact preview */}
                     {impactStats && (
-                      <div
-                        className="ed-fadein"
-                        style={{
-                          marginTop: 10,
-                          padding: "10px 10px",
-                          borderRadius: 6,
-                          background: "#0c1520",
-                          border: "1px solid #1a2030",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: 9,
-                            color: "#555",
-                            textTransform: "uppercase",
-                            letterSpacing: 0.8,
-                            marginBottom: 8,
-                          }}
-                        >
+                      <div className="ed-fadein mt-2.5 rounded-[6px] bg-[#0c1520] border border-[#1a2030] p-2.5">
+
+                        <div className="mb-2 text-[9px] uppercase tracking-wider text-text-faint">
                           Impact Preview
                         </div>
                         {[pick1, pick2].map((gi) => (
-                          <div key={gi} style={{ marginBottom: 8 }}>
-                            <div
-                              style={{
-                                fontSize: 10,
-                                color: "#22d3ee",
-                                fontWeight: 600,
-                                marginBottom: 4,
-                              }}
-                            >
+                          <div key={gi} className="mb-2">
+                            <div className="mb-1 text-[10px] font-semibold text-accent-cyan">
                               Group {gi + 1}
                             </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: 6,
-                                flexWrap: "wrap",
-                              }}
-                            >
+                            <div className="flex flex-wrap gap-1.5">
                               {daySlices.map((d) => {
                                 const s = impactStats[gi]?.[d.name];
                                 if (!s) return null;
@@ -1259,38 +867,24 @@ export default function LiveEditor({
                                 return (
                                   <div
                                     key={d.name}
-                                    style={{
-                                      padding: "3px 6px",
-                                      borderRadius: 4,
-                                      background: "#0f1219",
-                                      border: "1px solid #1a2030",
-                                      fontSize: 9,
-                                    }}
+                                    className="rounded bg-base-800 border border-[#1a2030] px-1.5 py-[3px] text-[9px]"
                                   >
                                     <div
-                                      style={{
-                                        color: dayColorMap[d.name],
-                                        fontWeight: 600,
-                                        marginBottom: 2,
-                                        fontSize: 8,
-                                      }}
+                                      className="mb-0.5 text-[8px] font-semibold"
+                                      style={{ color: dayColorMap[d.name] }}
                                     >
                                       {d.name.substring(0, 3)}
                                     </div>
                                     <div
-                                      style={{
-                                        color: valColor,
-                                        fontFamily: "'DM Mono', monospace",
-                                      }}
+                                      className="font-mono"
+                                      style={{ color: valColor }}
                                     >
                                       val {s.valDelta >= 0 ? "+" : ""}
                                       {s.valDelta}
                                     </div>
                                     <div
-                                      style={{
-                                        color: distColor,
-                                        fontFamily: "'DM Mono', monospace",
-                                      }}
+                                      className="font-mono"
+                                      style={{ color: distColor }}
                                     >
                                       dist {s.distDelta >= 0 ? "+" : ""}
                                       {s.distDelta}m
@@ -1308,18 +902,7 @@ export default function LiveEditor({
                     {cycleOn.some(Boolean) && (
                       <button
                         onClick={commitCycles}
-                        className="ed-btn ed-fadein"
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: 8,
-                          marginTop: 10,
-                          border: "1px solid #22d3ee",
-                          background: "rgba(34,211,238,0.08)",
-                          color: "#22d3ee",
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
+                        className="ed-btn ed-fadein mt-2.5 w-full rounded-lg border border-accent-cyan bg-accent-cyan/[0.08] p-2.5 text-xs font-semibold text-accent-cyan"
                       >
                         Apply {cycleOn.filter(Boolean).length} Cycle
                         {cycleOn.filter(Boolean).length !== 1 ? "s" : ""}
@@ -1329,17 +912,8 @@ export default function LiveEditor({
                 )}
 
                 {pick1 !== null && pick2 !== null && cycles.length === 0 && (
-                  <div
-                    className="ed-fadein"
-                    style={{
-                      padding: 12,
-                      background: "#0f1f0f",
-                      borderRadius: 8,
-                      border: "1px solid #27ae6033",
-                      fontSize: 11,
-                      color: "#34d399",
-                    }}
-                  >
+                  <div className="ed-fadein rounded-lg bg-[#0f1f0f] border border-success/20 p-3 text-[11px] text-success-light">
+
                     Identical schedules — nothing to switch.
                   </div>
                 )}
@@ -1348,25 +922,12 @@ export default function LiveEditor({
 
             {/* -- Change log -- */}
             {changes > 0 && (
-              <div
-                style={{
-                  marginTop: 20,
-                  paddingTop: 14,
-                  borderTop: "1px solid #1a2030",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 9,
-                    color: "#555",
-                    textTransform: "uppercase",
-                    letterSpacing: 0.8,
-                    marginBottom: 8,
-                  }}
-                >
+              <div className="mt-5 pt-3.5 border-t border-[#1a2030]">
+
+                <div className="mb-2 text-[9px] uppercase tracking-wider text-text-faint">
                   Changes ({changes})
                 </div>
-                <div style={{ maxHeight: 180, overflowY: "auto" }}>
+                <div className="max-h-[180px] overflow-y-auto">
                   {draft
                     .flatMap((g, gi) =>
                       g.map((act, si) => {
@@ -1375,31 +936,16 @@ export default function LiveEditor({
                         return (
                           <div
                             key={`${gi}-${si}`}
-                            style={{
-                              fontSize: 9,
-                              padding: "3px 0",
-                              borderBottom: "1px solid #111827",
-                              display: "flex",
-                              gap: 4,
-                              alignItems: "center",
-                              color: "#666",
-                            }}
+                            className="flex items-center gap-1 py-[3px] text-[9px] text-text-muted border-b border-[#111827]"
                           >
-                            <span
-                              style={{
-                                color: "#d4a847",
-                                fontFamily: "'DM Mono', monospace",
-                                fontWeight: 600,
-                                minWidth: 22,
-                              }}
-                            >
+                            <span className="min-w-[22px] font-mono font-semibold text-accent-gold">
                               G{gi + 1}
                             </span>
-                            <span style={{ color: "#f87171" }}>
+                            <span className="text-accent-red">
                               {shortName(orig)}
                             </span>
-                            <span style={{ color: "#333" }}>→</span>
-                            <span style={{ color: "#34d399" }}>
+                            <span className="text-base-300">→</span>
+                            <span className="text-accent-green">
                               {shortName(act)}
                             </span>
                           </div>
@@ -1417,27 +963,18 @@ export default function LiveEditor({
   );
 }
 
-/* â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–
+/* ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
    Tiny sub-components
-   â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â–â– */
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ */
 
 function PickBadge({ label, sub }) {
   return (
-    <div
-      className="ed-fadein"
-      style={{
-        padding: "10px 12px",
-        background: "rgba(34,211,238,0.05)",
-        borderRadius: 8,
-        border: "1px solid #22d3ee33",
-        marginBottom: 10,
-      }}
-    >
-      <div style={{ fontSize: 11, color: "#22d3ee", fontWeight: 600 }}>
+    <div className="ed-fadein mb-2.5 rounded-lg border border-accent-cyan/20 bg-accent-cyan/5 px-3 py-2.5">
+      <div className="text-[11px] font-semibold text-accent-cyan">
         {label}
       </div>
       {sub && (
-        <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>{sub}</div>
+        <div className="mt-[3px] text-[10px] text-text-faint">{sub}</div>
       )}
     </div>
   );

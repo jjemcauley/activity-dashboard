@@ -35,10 +35,10 @@ function processFiles(metaCSV, distCSV, schedCSV, simCSV = null) {
   }
 
   const registry = buildRegistry(metadataActivities, distNames, [...scheduleNames]);
-  
+
   // Parse similarities if provided
   const similarities = simCSV ? parseSimilarities(simCSV) : null;
-  
+
   return { registry, distMatrix, rotations, timeSlots, daySlices, startLocations, similarities };
 }
 
@@ -49,7 +49,7 @@ export default function App() {
   const [loadError, setLoadError] = useState(null);
   const [savedEdits, setSavedEdits] = useState({});
   const [useEdited, setUseEdited] = useState(true);
-  
+
   // Builder state - lifted here for persistence across tab changes
   const [builderState, setBuilderState] = useState(null);
 
@@ -100,7 +100,7 @@ export default function App() {
       storage.saveCSV('metadata', files.metadata);
       storage.saveCSV('distances', files.distances);
       storage.saveCSV('schedule', files.schedule);
-      
+
       // Save similarities if provided, or clear if not
       if (files.similarities) {
         storage.saveCSV('similarities', files.similarities);
@@ -143,7 +143,7 @@ export default function App() {
     });
   }, []);
 
-  // Ã¢â‚¬â€ Single effective rotations array Ã¢â‚¬â€
+  // --- Single effective rotations array ---
   // Toggle lives here so Dashboard receives ONE consistent dataset
   const hasAnyEdits = Object.keys(savedEdits).length > 0;
 
@@ -164,22 +164,19 @@ export default function App() {
     return flags;
   }, [savedEdits]);
 
-  // Ã¢â‚¬â€ Loading Ã¢â‚¬â€
+  // --- Loading ---
   if (mode === 'loading') {
     return (
-      <div style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexDirection: 'column', gap: 12,
-      }}>
-        <div style={{ fontSize: 20, fontFamily: "'Playfair Display', serif", color: '#d4a847' }}>
+      <div className="min-h-screen flex items-center justify-center flex-col gap-3">
+        <div className="text-xl font-display text-accent-gold">
           Loading...
         </div>
-        <div style={{ fontSize: 12, color: '#666' }}>Checking for saved data</div>
+        <div className="text-xs text-text-muted">Checking for saved data</div>
       </div>
     );
   }
 
-  // Ã¢â‚¬â€ Upload Ã¢â‚¬â€
+  // --- Upload ---
   if (mode === 'upload') {
     return (
       <FileUploader
@@ -189,32 +186,24 @@ export default function App() {
     );
   }
 
-  // Ã¢â‚¬â€ Main app Ã¢â‚¬â€
+  // --- Main app ---
   if (mode === 'app' && dashData) {
     const activeTab = TABS.find(t => t.id === tab) || TABS[0];
     const hasSimilarities = !!dashData.similarities;
 
     return (
-      <div style={{ minHeight: '100vh', background: '#0f1219' }}>
+      <div className="min-h-screen bg-base-800">
 
-        {/* Ã¢â‚¬â€ Top Nav Bar Ã¢â‚¬â€ */}
-        <div style={{
-          background: 'linear-gradient(135deg, #1a1f2e, #0f1219)',
-          borderBottom: `2px solid ${activeTab.accent}`,
-          padding: '0 28px',
-          display: 'flex', alignItems: 'stretch', justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', paddingRight: 28, marginRight: 4,
-              borderRight: '1px solid #1e2636',
-            }}>
-              <h1 style={{
-                margin: 0, fontSize: 18, fontFamily: "'Playfair Display', serif",
-                color: '#e8e6e1', letterSpacing: 0.5, whiteSpace: 'nowrap',
-              }}>
+        {/* --- Top Nav Bar --- */}
+        <div
+          className="bg-gradient-to-br from-base-600 to-base-800 px-7 flex items-stretch justify-between"
+          style={{ borderBottom: `2px solid ${activeTab.accent}` }}
+        >
+          <div className="flex items-stretch gap-0">
+            <div className="flex items-center pr-7 mr-1 border-r border-base-500">
+              <h1 className="m-0 text-lg font-display text-text-primary tracking-wide whitespace-nowrap">
                 Fall Activity Matrix
-                <span style={{ color: '#555', fontWeight: 400, fontSize: 13, marginLeft: 8 }}>SR 2026</span>
+                <span className="text-text-faint font-normal text-[13px] ml-2">SR 2026</span>
               </h1>
             </div>
 
@@ -223,72 +212,53 @@ export default function App() {
               const showBadge = t.id === 'dashboard' && hasAnyEdits;
               const showSimBadge = t.id === 'generator' && hasSimilarities;
               const isDisabled = t.id === 'generator' && !hasSimilarities;
-              
+
               return (
-                <button 
-                  key={t.id} 
-                  onClick={() => !isDisabled && setTab(t.id)} 
+                <button
+                  key={t.id}
+                  onClick={() => !isDisabled && setTab(t.id)}
                   title={isDisabled ? 'Upload similarities file to enable' : undefined}
+                  className={`py-3.5 px-5 bg-transparent border-0 border-b-3 border-solid text-[13px] font-sans -mb-0.5 flex items-center gap-1.5 transition-all duration-150 ${
+                    active ? 'font-bold' : 'font-medium'
+                  } ${
+                    isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                  }`}
                   style={{
-                    padding: '14px 20px', background: 'transparent',
-                    border: 'none', borderBottom: active ? `3px solid ${t.accent}` : '3px solid transparent',
+                    borderBottomColor: active ? t.accent : 'transparent',
                     color: isDisabled ? '#444' : active ? t.accent : '#666',
-                    fontSize: 13, fontWeight: active ? 700 : 500,
-                    cursor: isDisabled ? 'not-allowed' : 'pointer', 
-                    transition: 'all 0.15s',
-                    fontFamily: "'DM Sans', sans-serif",
-                    marginBottom: -2,
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    opacity: isDisabled ? 0.5 : 1,
                   }}
                 >
                   {t.label}
                   {showBadge && (
-                    <span style={{
-                      fontSize: 8, fontWeight: 700, color: '#0f1219',
-                      background: '#22d3ee', borderRadius: 3, padding: '1px 5px',
-                      lineHeight: '12px',
-                    }}>EDITED</span>
+                    <span className="badge text-base-800 bg-accent-cyan">EDITED</span>
                   )}
                   {showSimBadge && (
-                    <span style={{
-                      fontSize: 8, fontWeight: 700, color: '#0f1219',
-                      background: '#a78bfa', borderRadius: 3, padding: '1px 5px',
-                      lineHeight: '12px',
-                    }}>READY</span>
+                    <span className="badge text-base-800 bg-accent-purple">READY</span>
                   )}
                   {isDisabled && (
-                    <span style={{
-                      fontSize: 8, fontWeight: 600, color: '#666',
-                      background: '#2a3040', borderRadius: 3, padding: '1px 5px',
-                      lineHeight: '12px',
-                    }}>NO DATA</span>
+                    <span className="badge text-text-muted bg-base-400">NO DATA</span>
                   )}
                 </button>
               );
             })}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="flex items-center gap-3">
             {/* Similarities indicator */}
             {hasSimilarities && (
-              <div style={{
-                fontSize: 10, color: '#a78bfa', display: 'flex', alignItems: 'center', gap: 4,
-              }}>
-                <span style={{ fontSize: 12 }}>Ã°Å¸â€—</span>
+              <div className="text-[10px] text-accent-purple flex items-center gap-1">
+                <span className="text-xs">{'\ud83d\uddc7'}</span>
                 {Object.keys(dashData.similarities.groups).length} similarity groups
               </div>
             )}
-            <button onClick={handleReset} style={{
-              padding: '6px 12px', borderRadius: 6, border: '1px solid #2a3040',
-              background: 'transparent', color: '#555', fontSize: 11,
-              cursor: 'pointer', transition: 'all 0.15s',
-              fontFamily: "'DM Sans', sans-serif",
-            }}>Ã¢â€ Â» Re-upload</button>
+            <button
+              onClick={handleReset}
+              className="py-1.5 px-3 rounded-md border border-base-400 bg-transparent text-text-faint text-[11px] cursor-pointer transition-all duration-150 font-sans"
+            >{'\u21bb'} Re-upload</button>
           </div>
         </div>
 
-        {/* Ã¢â‚¬â€ Tab Content Ã¢â‚¬â€ */}
+        {/* --- Tab Content --- */}
         {tab === 'dashboard' && (
           <Dashboard
             registry={dashData.registry}
@@ -339,7 +309,7 @@ export default function App() {
           />
         )}
         {tab === 'data' && (
-          <DataView 
+          <DataView
             registry={dashData.registry}
             similarities={dashData.similarities}
           />
@@ -351,9 +321,9 @@ export default function App() {
   return null;
 }
 
-/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+/* ========================================================================
    INLINE DATA VIEW - Shows activities and their similarity groups
-   Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */
+   ======================================================================== */
 
 function DataView({ registry, similarities }) {
   // Build activity list with similarity info
@@ -369,7 +339,7 @@ function DataView({ registry, similarities }) {
       });
     }
   }
-  
+
   // Sort by similarity group, then by name
   activities.sort((a, b) => {
     const groupA = a.similarityGroup || 'zzz_none';
@@ -377,7 +347,7 @@ function DataView({ registry, similarities }) {
     if (groupA !== groupB) return groupA.localeCompare(groupB);
     return a.name.localeCompare(b.name);
   });
-  
+
   // Group activities by similarity group
   const grouped = {};
   const ungrouped = [];
@@ -389,119 +359,84 @@ function DataView({ registry, similarities }) {
       ungrouped.push(act);
     }
   }
-  
+
   const groupNames = Object.keys(grouped).sort();
-  
+
   return (
-    <div style={{ padding: 28, background: '#0f1219', minHeight: '100vh' }}>
-      <h2 style={{ 
-        margin: '0 0 20px', fontSize: 20, 
-        fontFamily: "'Playfair Display', serif", color: '#34d399' 
-      }}>
+    <div className="p-7 bg-base-800 min-h-screen">
+      <h2 className="m-0 mb-5 text-xl font-display text-accent-green">
         Activity Similarity Groups
       </h2>
-      
+
       {!similarities ? (
-        <div style={{
-          padding: 20, background: '#1a1510', borderRadius: 8, 
-          border: '1px solid #fbbf2440', color: '#fbbf24', fontSize: 13,
-        }}>
-          Ã¢Å¡Â Ã¯Â¸Â No similarity data loaded. Upload the Activity Similarities CSV.
+        <div className="p-5 bg-[#1a1510] rounded-lg border border-accent-amber/25 text-accent-amber text-[13px]">
+          {'\u26a0\ufe0f'} No similarity data loaded. Upload the Activity Similarities CSV.
         </div>
       ) : (
         <>
           {/* Summary */}
-          <div style={{ 
-            display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' 
-          }}>
-            <div style={{
-              padding: '12px 20px', background: '#141924', borderRadius: 8,
-              border: '1px solid #1e2636',
-            }}>
-              <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', marginBottom: 4 }}>
+          <div className="flex gap-4 mb-6 flex-wrap">
+            <div className="stat-card">
+              <div className="section-label text-text-muted mb-1">
                 Similarity Groups
               </div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#34d399', fontFamily: "'DM Mono', monospace" }}>
+              <div className="text-2xl font-bold text-accent-green font-mono">
                 {groupNames.length}
               </div>
             </div>
-            <div style={{
-              padding: '12px 20px', background: '#141924', borderRadius: 8,
-              border: '1px solid #1e2636',
-            }}>
-              <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', marginBottom: 4 }}>
+            <div className="stat-card">
+              <div className="section-label text-text-muted mb-1">
                 Grouped Activities
               </div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#22d3ee', fontFamily: "'DM Mono', monospace" }}>
+              <div className="text-2xl font-bold text-accent-cyan font-mono">
                 {activities.length - ungrouped.length}
               </div>
             </div>
             {ungrouped.length > 0 && (
-              <div style={{
-                padding: '12px 20px', background: '#141924', borderRadius: 8,
-                border: '1px solid #fbbf2440',
-              }}>
-                <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', marginBottom: 4 }}>
+              <div className="py-3 px-5 bg-base-700 rounded-lg border border-accent-amber/25">
+                <div className="section-label text-text-muted mb-1">
                   No Group Assigned
                 </div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#fbbf24', fontFamily: "'DM Mono', monospace" }}>
+                <div className="text-2xl font-bold text-accent-amber font-mono">
                   {ungrouped.length}
                 </div>
               </div>
             )}
           </div>
-          
+
           {/* Groups */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="flex flex-col gap-4">
             {groupNames.map(groupName => (
-              <div key={groupName} style={{
-                background: '#141924', borderRadius: 8, border: '1px solid #1e2636',
-                padding: 16,
-              }}>
-                <div style={{ 
-                  display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 
-                }}>
-                  <span style={{
-                    fontSize: 14, fontWeight: 700, color: '#34d399',
-                    fontFamily: "'Playfair Display', serif",
-                  }}>
+              <div key={groupName} className="bg-base-700 rounded-lg border border-base-500 p-4">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <span className="text-sm font-bold text-accent-green font-display">
                     {groupName}
                   </span>
-                  <span style={{
-                    fontSize: 10, padding: '2px 8px', borderRadius: 10,
-                    background: '#34d39920', color: '#34d399', fontWeight: 600,
-                  }}>
+                  <span className="text-[10px] py-0.5 px-2 rounded-xl bg-accent-green/10 text-accent-green font-semibold">
                     {grouped[groupName].length} activities
                   </span>
                 </div>
-                
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+
+                <div className="flex flex-wrap gap-2">
                   {grouped[groupName].map(act => (
-                    <div key={act.name} style={{
-                      padding: '8px 12px', borderRadius: 6,
-                      background: '#0f1219', border: '1px solid #1e2636',
-                    }}>
-                      <div style={{ 
-                        fontSize: 12, fontWeight: 600, color: '#e8e6e1', marginBottom: 4 
-                      }}>
+                    <div key={act.name} className="py-2 px-3 rounded-md bg-base-800 border border-base-500">
+                      <div className="text-xs font-semibold text-text-primary mb-1">
                         {act.name}
                       </div>
-                      <div style={{ 
-                        display: 'flex', gap: 8, fontSize: 10, color: '#666' 
-                      }}>
-                        <span style={{ 
-                          color: act.value >= 70 ? '#34d399' : act.value >= 50 ? '#fbbf24' : '#888' 
-                        }}>
+                      <div className="flex gap-2 text-[10px] text-text-muted">
+                        <span className={
+                          act.value >= 70 ? 'text-accent-green' : act.value >= 50 ? 'text-accent-amber' : 'text-text-secondary'
+                        }>
                           Val: {act.value}
                         </span>
-                        <span style={{
-                          color: act.intensity === 'Intense' ? '#f87171' : 
-                                 act.intensity === 'Moderate' ? '#fbbf24' : '#34d399'
-                        }}>
+                        <span className={
+                          act.intensity === 'Intense' ? 'text-accent-red' :
+                          act.intensity === 'Moderate' ? 'text-accent-amber' : 'text-accent-green'
+                        }>
                           {act.intensity}
                         </span>
                         {act.maxGroups < 99 && (
-                          <span style={{ color: '#f472b6' }}>Max: {act.maxGroups}</span>
+                          <span className="text-accent-pink">Max: {act.maxGroups}</span>
                         )}
                       </div>
                     </div>
@@ -509,40 +444,27 @@ function DataView({ registry, similarities }) {
                 </div>
               </div>
             ))}
-            
+
             {/* Ungrouped */}
             {ungrouped.length > 0 && (
-              <div style={{
-                background: '#1a1510', borderRadius: 8, border: '1px solid #fbbf2440',
-                padding: 16,
-              }}>
-                <div style={{ 
-                  display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 
-                }}>
-                  <span style={{
-                    fontSize: 14, fontWeight: 700, color: '#fbbf24',
-                    fontFamily: "'Playfair Display', serif",
-                  }}>
-                    Ã¢Å¡Â Ã¯Â¸Â No Similarity Group
+              <div className="bg-[#1a1510] rounded-lg border border-accent-amber/25 p-4">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <span className="text-sm font-bold text-accent-amber font-display">
+                    {'\u26a0\ufe0f'} No Similarity Group
                   </span>
-                  <span style={{ fontSize: 10, color: '#888' }}>
+                  <span className="text-[10px] text-text-secondary">
                     (No diminishing returns applied)
                   </span>
                 </div>
-                
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+
+                <div className="flex flex-wrap gap-2">
                   {ungrouped.map(act => (
-                    <div key={act.name} style={{
-                      padding: '8px 12px', borderRadius: 6,
-                      background: '#0f1219', border: '1px solid #fbbf2440',
-                    }}>
-                      <div style={{ 
-                        fontSize: 12, fontWeight: 600, color: '#fbbf24', marginBottom: 4 
-                      }}>
+                    <div key={act.name} className="py-2 px-3 rounded-md bg-base-800 border border-accent-amber/25">
+                      <div className="text-xs font-semibold text-accent-amber mb-1">
                         {act.name}
                       </div>
-                      <div style={{ fontSize: 10, color: '#666' }}>
-                        Val: {act.value} Ã¢â‚¬Â¢ {act.intensity}
+                      <div className="text-[10px] text-text-muted">
+                        Val: {act.value} {'\u2022'} {act.intensity}
                       </div>
                     </div>
                   ))}

@@ -1,7 +1,21 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find /Users/jjemc/Desktop/activity-dashboard -name \"* [0-9]*\" -not -path \"*/node_modules/*\" -delete)"
+      "Bash(find /Users/jjemc/Desktop/activity-dashboard -name \"* [0-9]*\" -not -path \"*/node_modules/*\" -delete)",
+      "Bash(find src -type f \\\\\\( -name \"*.jsx\" -o -name \"*.js\" -o -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.css\" \\\\\\) -exec wc -l {} +)",
+      "Bash(find src -type f -exec ls -lh {} +)",
+      "Read(//Users/jjemc/Desktop/activity-dashboard/**)",
+      "Bash(sort -k2)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(find /Users/jjemc/Desktop/activity-dashboard -type f -name \"*.json\" ! -path \"*/node_modules/*\" -exec head -20 {} +)",
+      "Bash(wc -l /Users/jjemc/Desktop/activity-dashboard/src/components/*.jsx)",
+      "Bash(grep -n \"function computeDayStats\\\\|function parseStaff\\\\|function cloneMatrix\" /Users/jjemc/Desktop/activity-dashboard/src/components/*.jsx /Users/jjemc/Desktop/activity-dashboard/src/utils/*.js)",
+      "Bash(grep -n \"export\\\\|function\\\\|const.*=\" /Users/jjemc/Desktop/activity-dashboard/src/components/*.jsx)",
+      "Bash(grep -n \"^export\\\\|^function\\\\|^const.*=\" /Users/jjemc/Desktop/activity-dashboard/src/utils/*.js)",
+      "Bash(xxd /Users/jjemc/Desktop/activity-dashboard/src/App.jsx)",
+      "Bash(python3 -c \":*)",
+      "Bash(wc -l /Users/jjemc/Desktop/activity-dashboard/src/components/*.jsx /Users/jjemc/Desktop/activity-dashboard/src/App.jsx /Users/jjemc/Desktop/activity-dashboard/src/utils/*.js /Users/jjemc/Desktop/activity-dashboard/src/constants/*.js)",
+      "Bash(npm install tailwindcss @tailwindcss/vite)"
     ]
   }
 }
