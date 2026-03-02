@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/jjemc/Desktop/activity-dashboard -name \"* [0-9]*\" -not -path \"*/node_modules/*\" -delete)"
+    ]
+  }
+}
