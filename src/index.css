@@ -78,29 +78,55 @@
   --font-sans: 'DM Sans', sans-serif;
   --font-display: 'Playfair Display', serif;
   --font-mono: 'DM Mono', monospace;
+
+  /* ── Animations ── */
+  --animate-ed-flash: edFlash 0.5s ease-out;
+  --animate-ed-slide-in: edSlideIn 0.18s ease-out both;
+  --animate-ed-pulse: edPulse 1.5s ease-in-out infinite;
 }
 
-/* ── Base styles ── */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@layer base {
+  body {
+    background: var(--color-base-800);
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+  }
 
-body {
-  background: var(--color-base-800);
-  font-family: var(--font-sans);
-  color: var(--color-text-primary);
-}
+  #root {
+    min-height: 100vh;
+  }
 
-#root {
-  min-height: 100vh;
+  /* ── Scrollbar styling for dark theme ── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-base-800);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-base-400);
+    border-radius: 3px;
+  }
+
+  /* ── Cell hover clear button ── */
+  td:hover .cell-clear-btn {
+    opacity: 1 !important;
+  }
 }
 
 /* ── Animations ── */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes edFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(34,211,238,0.5); }
+  100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
+}
+@keyframes edSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes edPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
 }
 
 /* ── Utility component classes ── */
@@ -164,55 +190,19 @@ body {
   cursor: pointer;
 }
 
-/* ── Scrollbar styling for dark theme ── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--color-base-800);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-base-400);
-  border-radius: 3px;
-}
-
-/* ── Cell hover clear button ── */
-td:hover .cell-clear-btn {
-  opacity: 1 !important;
-}
-
-/* ── LiveEditor animations ── */
-@keyframes edFlash {
-  0%   { box-shadow: 0 0 0 0 rgba(34,211,238,0.5); }
-  100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
-}
-@keyframes edSlideIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes edPulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.6; }
-}
-
-.ed-cell {
+@utility ed-cell {
   transition: border-color 0.2s, transform 0.12s, box-shadow 0.2s;
   will-change: transform;
 }
-.ed-cell:hover {
+
+@utility ed-cell-hover {
   transform: scale(1.05);
-  z-index: 6 !important;
+  z-index: 6;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
-.ed-fadein {
-  animation: edSlideIn 0.18s ease-out both;
-}
-.ed-btn {
+
+@utility ed-btn {
   transition: all 0.15s;
   cursor: pointer;
   user-select: none;
-}
-.ed-btn:hover {
-  filter: brightness(1.15);
 }

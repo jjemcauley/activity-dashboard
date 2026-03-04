@@ -19,21 +19,49 @@ export function parseStaff(staffStr) {
 /**
  * Compute per-day stats for a single group (row) within a day slice.
  *
- * Returns: { avgVal, totalDist, maxDist, indoorCount, outdoorCount, name, slots }
+ * Returns: { avgVal, totalDist, maxDist, indoorCount, outdoorCount,
+ *            maxConsecutiveIntense, intensities, startDist }
  */
 export function computeDayStats(group, start, end, registry, distMatrix, startLocation) {
   let valSum = 0, valCount = 0, totalDist = 0, maxDist = 0;
   let indoorCount = 0, outdoorCount = 0;
+  let consecutiveIntense = 0, maxConsecutiveIntense = 0;
+  const intensities = [];
+  let startDist = null;
+
+  // Add start-location walk if available
+  if (startLocation && group[start]) {
+    const sd = getStartDistance(startLocation, group[start], distMatrix, registry.nameMap);
+    if (sd !== null) {
+      startDist = sd;
+      totalDist += sd;
+      maxDist = Math.max(maxDist, sd);
+    }
+  }
 
   for (let c = start; c < end; c++) {
     const act = group[c];
-    if (!act) continue;
+    if (!act) {
+      intensities.push('Unknown');
+      consecutiveIntense = 0;
+      continue;
+    }
     const meta = lookupMeta(act, registry);
     if (meta) {
       valSum += meta.value || 0;
       valCount++;
       if (/indoor/i.test(meta.io)) indoorCount++;
       else outdoorCount++;
+      intensities.push(meta.intensity || 'Unknown');
+      if (meta.intensity === 'Intense') {
+        consecutiveIntense++;
+        maxConsecutiveIntense = Math.max(maxConsecutiveIntense, consecutiveIntense);
+      } else {
+        consecutiveIntense = 0;
+      }
+    } else {
+      intensities.push('Unknown');
+      consecutiveIntense = 0;
     }
     if (c > start) {
       const prev = group[c - 1];
@@ -47,21 +75,15 @@ export function computeDayStats(group, start, end, registry, distMatrix, startLo
     }
   }
 
-  // Add start-location walk if available
-  if (startLocation && group[start]) {
-    const sd = getStartDistance(startLocation, group[start], distMatrix, registry.nameMap);
-    if (sd !== null) {
-      totalDist += sd;
-      maxDist = Math.max(maxDist, sd);
-    }
-  }
-
   return {
     avgVal: valCount ? Math.round(valSum / valCount) : 0,
     totalDist: Math.round(totalDist),
     maxDist: Math.round(maxDist),
     indoorCount,
     outdoorCount,
+    maxConsecutiveIntense,
+    intensities,
+    startDist,
   };
 }
 

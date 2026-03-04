@@ -1,6 +1,9 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useDashboard } from "../context/DashboardContext";
 import { DAY_COLORS, CYCLE_COLORS, valueColor, valueTextColor } from "../constants/colors.js";
+import DistanceBadge from "./shared/DistanceBadge.jsx";
 import { getDistance, lookupMeta, shortName } from "../utils/parsers.js";
+import { computeDayStats } from "../utils/scheduleStats.js";
 
 /* ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
    Constants
@@ -71,38 +74,23 @@ function applyCycles(groups, rA, rB, cycles, which) {
   return g;
 }
 
-/** Compute per-day stats for a single group row */
-function dayStats(group, start, end, registry, distMatrix) {
-  const slice = group.slice(start, end);
-  const vals = slice.map((a) => lookupMeta(a, registry)?.value ?? 0);
-  const avg = slice.length
-    ? Math.round(vals.reduce((s, v) => s + v, 0) / slice.length)
-    : 0;
-  let totalDist = 0,
-    maxDist = 0;
-  for (let i = 1; i < slice.length; i++) {
-    const d = getDistance(slice[i - 1], slice[i], distMatrix, registry.nameMap);
-    if (d !== null) {
-      totalDist += d;
-      maxDist = Math.max(maxDist, d);
-    }
-  }
-  return { avg, totalDist, maxDist };
-}
+/* dayStats replaced by shared computeDayStats from scheduleStats.js */
+
+/* ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+   Color / style helpers for distance badge
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ */
+
 
 /* ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
    LiveEditor Component
    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ */
 
 export default function LiveEditor({
-  registry,
-  distMatrix,
   rotations,
-  timeSlots,
-  daySlices,
   onSave,
   savedEdits,
 }) {
+  const { registry, distMatrix, timeSlots, daySlices } = useDashboard();
   const [rotIdx, setRotIdx] = useState(0);
   const original = useMemo(
     () => rotations[rotIdx]?.groups || [],
@@ -286,22 +274,24 @@ export default function LiveEditor({
     for (const gi of [pick1, pick2]) {
       stats[gi] = {};
       for (const d of daySlices) {
-        const before = dayStats(
+        const before = computeDayStats(
           draft[gi],
           d.start,
           d.end,
           registry,
-          distMatrix
+          distMatrix,
+          null
         );
-        const after = dayStats(
+        const after = computeDayStats(
           preview[gi],
           d.start,
           d.end,
           registry,
-          distMatrix
+          distMatrix,
+          null
         );
         stats[gi][d.name] = {
-          valDelta: after.avg - before.avg,
+          valDelta: after.avgVal - before.avgVal,
           distDelta: after.totalDist - before.totalDist,
         };
       }
@@ -366,6 +356,13 @@ export default function LiveEditor({
     return null;
   }
 
+  /** Compute the cell background, combining overlay + base color */
+  function cellBackground(overlay, bg) {
+    return overlay
+      ? `linear-gradient(${overlay},${overlay}),${bg}`
+      : bg;
+  }
+
   function displayVal(gi, si) {
     if (preview && (gi === pick1 || gi === pick2)) return preview[gi][si];
     return draft[gi]?.[si];
@@ -394,7 +391,7 @@ export default function LiveEditor({
           <button
             key={i}
             onClick={() => setRotIdx(i)}
-            className={`ed-btn rounded-[5px] px-3.5 py-1.5 text-[11px] font-semibold ${
+            className={`ed-btn hover:brightness-[1.15] rounded-[5px] px-3.5 py-1.5 text-[11px] font-semibold ${
               rotIdx === i
                 ? "border border-accent-cyan bg-accent-cyan text-base-800"
                 : "border border-base-500 bg-transparent text-text-muted"
@@ -413,7 +410,7 @@ export default function LiveEditor({
             <button
               key={key}
               onClick={() => selectOp(key)}
-              className={`ed-btn flex items-center gap-[5px] rounded-[6px] px-3.5 py-[7px] text-[11px] font-semibold ${
+              className={`ed-btn hover:brightness-[1.15] flex items-center gap-[5px] rounded-[6px] px-3.5 py-[7px] text-[11px] font-semibold ${
                 active
                   ? "border border-accent-cyan bg-accent-cyan/[0.08] text-accent-cyan"
                   : "border border-base-500 bg-transparent text-text-muted"
@@ -431,7 +428,7 @@ export default function LiveEditor({
         <button
           onClick={undo}
           disabled={!history.length}
-          className={`ed-btn rounded-[5px] border border-base-500 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold ${
+          className={`ed-btn hover:brightness-[1.15] rounded-[5px] border border-base-500 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold ${
             history.length ? "text-text-secondary" : "text-base-300 opacity-40"
           }`}
         >
@@ -440,7 +437,7 @@ export default function LiveEditor({
         <button
           onClick={redo}
           disabled={!future.length}
-          className={`ed-btn rounded-[5px] border border-base-500 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold ${
+          className={`ed-btn hover:brightness-[1.15] rounded-[5px] border border-base-500 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold ${
             future.length ? "text-text-secondary" : "text-base-300 opacity-40"
           }`}
         >
@@ -450,7 +447,7 @@ export default function LiveEditor({
         {changes > 0 && (
           <button
             onClick={revertAll}
-            className="ed-btn rounded-[5px] border border-error/25 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold text-error"
+            className="ed-btn hover:brightness-[1.15] rounded-[5px] border border-error/25 bg-transparent px-2.5 py-[5px] text-[10px] font-semibold text-error"
           >
             ✕ Revert
           </button>
@@ -466,7 +463,7 @@ export default function LiveEditor({
         {changes > 0 && onSave && (
           <button
             onClick={() => onSave(rotIdx, draft)}
-            className="ed-btn ml-0.5 rounded-[5px] border border-success bg-success/[0.08] px-3 py-[5px] text-[10px] font-semibold text-success"
+            className="ed-btn hover:brightness-[1.15] ml-0.5 rounded-[5px] border border-success bg-success/[0.08] px-3 py-[5px] text-[10px] font-semibold text-success"
           >
             &#x2714; Save to Dashboard
           </button>
@@ -481,7 +478,7 @@ export default function LiveEditor({
 
         {/* Context hint */}
         {op && (
-          <div className="ed-fadein ml-auto text-[11px] italic text-text-faint">
+          <div className="animate-ed-slide-in ml-auto text-[11px] italic text-text-faint">
             {OPS[op].desc}
           </div>
         )}
@@ -501,10 +498,10 @@ export default function LiveEditor({
                     {di > 0 && <th className="w-[18px]" />}
                     <th
                       colSpan={d.end - d.start}
-                      className="text-center text-xs font-bold font-display tracking-wide pb-0.5 pt-[5px]"
+                      className="text-center text-xs font-bold font-display tracking-wide pb-0.5 pt-[5px] text-[var(--day-color)] border-b-2 border-b-[var(--day-border)]"
                       style={{
-                        color: dayColorMap[d.name],
-                        borderBottom: `2px solid ${dayColorMap[d.name]}25`,
+                        '--day-color': dayColorMap[d.name],
+                        '--day-border': `${dayColorMap[d.name]}25`,
                       }}
                     >
                       {d.name}
@@ -581,6 +578,8 @@ export default function LiveEditor({
                       ? getDistance(prev, val, distMatrix, registry.nameMap)
                       : null;
 
+                    const isFlashing = flashKeys.has(`${gi}-${si}`);
+
                     return (
                       <React.Fragment key={si}>
                         {isGap && <td className="w-[18px]" />}
@@ -588,47 +587,19 @@ export default function LiveEditor({
                           {/* Distance badge */}
                           {dist !== null && (
                             <div className="absolute top-1/2 -left-px -translate-x-1/2 -translate-y-1/2 z-[4]">
-                              <div
-                                className="text-[8px] rounded-[3px] px-[3px] font-semibold font-mono leading-[13px] min-w-[24px] text-center"
-                                style={{
-                                  color:
-                                    dist > 600
-                                      ? "#dc2626"
-                                      : dist > 400
-                                      ? "#d97706"
-                                      : dist > 200
-                                      ? "#6b7280"
-                                      : "#059669",
-                                  background:
-                                    dist > 600
-                                      ? "#fef2f2"
-                                      : dist > 400
-                                      ? "#fffbeb"
-                                      : dist > 200
-                                      ? "#f3f4f6"
-                                      : "#ecfdf5",
-                                }}
-                              >
-                                {dist}m
-                              </div>
+                              <DistanceBadge dist={dist} compact />
                             </div>
                           )}
 
                           <div
-                            className={`ed-cell flex flex-col justify-between rounded-[6px] p-[5px] min-h-[50px] relative ${
+                            className={`ed-cell hover:scale-105 hover:z-[6] hover:shadow-[0_4px_20px_rgba(0,0,0,0.5)] flex flex-col justify-between rounded-[6px] p-[5px] min-h-[50px] relative bg-[var(--cell-bg)] text-[var(--cell-fg)] border-[var(--cell-border)] ${
                               op ? "cursor-pointer" : "cursor-default"
-                            }`}
+                            } ${isPreviewed ? "opacity-55" : ""} ${isFlashing ? "animate-ed-flash" : ""}`}
                             onClick={() => onCellClick(gi, si)}
                             style={{
-                              background: overlay
-                                ? `linear-gradient(${overlay},${overlay}),${bg}`
-                                : bg,
-                              color: fg,
-                              border: borderFor(state),
-                              opacity: isPreviewed ? 0.55 : 1,
-                              animation: flashKeys.has(`${gi}-${si}`)
-                                ? "edFlash 0.5s ease-out"
-                                : undefined,
+                              '--cell-bg': cellBackground(overlay, bg),
+                              '--cell-fg': fg,
+                              '--cell-border': borderFor(state),
                             }}
                           >
                             {/* Changed dot */}
@@ -638,7 +609,7 @@ export default function LiveEditor({
 
                             {/* Preview label */}
                             {isPreviewed && (
-                              <div className="absolute top-px left-[3px] text-[6px] font-bold tracking-wide uppercase text-accent-cyan animate-[edPulse_1.5s_ease-in-out_infinite]">
+                              <div className="absolute top-px left-[3px] text-[6px] font-bold tracking-wide uppercase text-accent-cyan animate-ed-pulse">
 
                                 preview
                               </div>
@@ -671,7 +642,7 @@ export default function LiveEditor({
         {/* -- Side Panel -- */}
         {op && (
           <div
-            className="ed-fadein w-[270px] shrink-0 overflow-y-auto p-4 px-[18px] text-xs bg-[#111827] border-l border-[#1a2030] max-h-[calc(100vh-80px)]"
+            className="animate-ed-slide-in w-[270px] shrink-0 overflow-y-auto p-4 px-[18px] text-xs bg-[#111827] border-l border-[#1a2030] max-h-[calc(100vh-80px)]"
           >
             <h3 className="mb-3 text-sm font-display text-accent-cyan">
               {OPS[op].icon} {OPS[op].label}
@@ -717,7 +688,7 @@ export default function LiveEditor({
                   activity B. Every instance globally swaps.
                 </p>
                 {pick1 && (
-                  <div className="ed-fadein mb-2.5 rounded-lg border border-accent-pink/25 bg-[#1f0f1a] px-3 py-2.5">
+                  <div className="animate-ed-slide-in mb-2.5 rounded-lg border border-accent-pink/25 bg-[#1f0f1a] px-3 py-2.5">
 
                     <div className="mb-[3px] text-[9px] uppercase tracking-wider text-text-muted">
                       Selected
@@ -750,7 +721,7 @@ export default function LiveEditor({
 
                 {/* Cycle list */}
                 {cycles.length > 0 && (
-                  <div className="ed-fadein">
+                  <div className="animate-ed-slide-in">
                     <div className="mb-2.5 rounded-[6px] bg-[#0c1520] border border-[#1a2030] px-2.5 py-[7px] text-[10px] text-text-secondary">
 
                       Groups{" "}
@@ -768,19 +739,19 @@ export default function LiveEditor({
                         <div
                           key={ci}
                           onClick={() => toggleCycle(ci)}
-                          className="ed-btn mb-1.5 overflow-hidden rounded-lg transition-all duration-200"
+                          className={`ed-btn hover:brightness-[1.15] mb-1.5 overflow-hidden rounded-lg transition-all duration-200 border border-[var(--cyc-border)] bg-[var(--cyc-bg)]`}
                           style={{
-                            border: `1px solid ${on ? color : "#1a2030"}`,
-                            background: on ? `${color}08` : "transparent",
+                            '--cyc-border': on ? color : "#1a2030",
+                            '--cyc-bg': on ? `${color}08` : "transparent",
                           }}
                         >
                           {/* Header */}
                           <div className="flex items-center gap-2 px-2.5 py-2">
                             <div
-                              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] transition-all duration-150"
+                              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] transition-all duration-150 border-2 border-[var(--chk-border)] bg-[var(--chk-bg)]"
                               style={{
-                                border: `2px solid ${on ? color : "#333"}`,
-                                background: on ? color : "transparent",
+                                '--chk-border': on ? color : "#333",
+                                '--chk-bg': on ? color : "transparent",
                               }}
                             >
                               {on && (
@@ -791,8 +762,8 @@ export default function LiveEditor({
                             </div>
                             <div>
                               <div
-                                className="text-[11px] font-semibold"
-                                style={{ color }}
+                                className="text-[11px] font-semibold text-[var(--cyc-color)]"
+                                style={{ '--cyc-color': color }}
                               >
                                 {cyc.length}-cycle
                               </div>
@@ -807,11 +778,11 @@ export default function LiveEditor({
                             {cyc.map((step, i) => (
                               <React.Fragment key={i}>
                                 <span
-                                  className="rounded-[3px] px-[5px] py-px text-[8px] font-medium font-mono"
+                                  className="rounded-[3px] px-[5px] py-px text-[8px] font-medium font-mono bg-[var(--chain-bg)] text-[var(--chain-fg)] border border-[var(--chain-border)]"
                                   style={{
-                                    background: `${color}18`,
-                                    color,
-                                    border: `1px solid ${color}28`,
+                                    '--chain-bg': `${color}18`,
+                                    '--chain-fg': color,
+                                    '--chain-border': `${color}28`,
                                   }}
                                 >
                                   {shortName(step.fromA)}
@@ -822,11 +793,11 @@ export default function LiveEditor({
                               </React.Fragment>
                             ))}
                             <span
-                              className="rounded-[3px] px-[5px] py-px text-[8px] font-medium font-mono"
+                              className="rounded-[3px] px-[5px] py-px text-[8px] font-medium font-mono bg-[var(--chain-bg)] text-[var(--chain-fg)] border border-[var(--chain-border)]"
                               style={{
-                                background: `${color}18`,
-                                color,
-                                border: `1px solid ${color}28`,
+                                '--chain-bg': `${color}18`,
+                                '--chain-fg': color,
+                                '--chain-border': `${color}28`,
                               }}
                             >
                               {shortName(cyc[0].fromA)}
@@ -838,7 +809,7 @@ export default function LiveEditor({
 
                     {/* Impact preview */}
                     {impactStats && (
-                      <div className="ed-fadein mt-2.5 rounded-[6px] bg-[#0c1520] border border-[#1a2030] p-2.5">
+                      <div className="animate-ed-slide-in mt-2.5 rounded-[6px] bg-[#0c1520] border border-[#1a2030] p-2.5">
 
                         <div className="mb-2 text-[9px] uppercase tracking-wider text-text-faint">
                           Impact Preview
@@ -868,24 +839,20 @@ export default function LiveEditor({
                                   <div
                                     key={d.name}
                                     className="rounded bg-base-800 border border-[#1a2030] px-1.5 py-[3px] text-[9px]"
+                                    style={{
+                                      '--day-label-color': dayColorMap[d.name],
+                                      '--val-color': valColor,
+                                      '--dist-color': distColor,
+                                    }}
                                   >
-                                    <div
-                                      className="mb-0.5 text-[8px] font-semibold"
-                                      style={{ color: dayColorMap[d.name] }}
-                                    >
+                                    <div className="mb-0.5 text-[8px] font-semibold text-[var(--day-label-color)]">
                                       {d.name.substring(0, 3)}
                                     </div>
-                                    <div
-                                      className="font-mono"
-                                      style={{ color: valColor }}
-                                    >
+                                    <div className="font-mono text-[var(--val-color)]">
                                       val {s.valDelta >= 0 ? "+" : ""}
                                       {s.valDelta}
                                     </div>
-                                    <div
-                                      className="font-mono"
-                                      style={{ color: distColor }}
-                                    >
+                                    <div className="font-mono text-[var(--dist-color)]">
                                       dist {s.distDelta >= 0 ? "+" : ""}
                                       {s.distDelta}m
                                     </div>
@@ -902,7 +869,7 @@ export default function LiveEditor({
                     {cycleOn.some(Boolean) && (
                       <button
                         onClick={commitCycles}
-                        className="ed-btn ed-fadein mt-2.5 w-full rounded-lg border border-accent-cyan bg-accent-cyan/[0.08] p-2.5 text-xs font-semibold text-accent-cyan"
+                        className="ed-btn hover:brightness-[1.15] animate-ed-slide-in mt-2.5 w-full rounded-lg border border-accent-cyan bg-accent-cyan/[0.08] p-2.5 text-xs font-semibold text-accent-cyan"
                       >
                         Apply {cycleOn.filter(Boolean).length} Cycle
                         {cycleOn.filter(Boolean).length !== 1 ? "s" : ""}
@@ -912,7 +879,7 @@ export default function LiveEditor({
                 )}
 
                 {pick1 !== null && pick2 !== null && cycles.length === 0 && (
-                  <div className="ed-fadein rounded-lg bg-[#0f1f0f] border border-success/20 p-3 text-[11px] text-success-light">
+                  <div className="animate-ed-slide-in rounded-lg bg-[#0f1f0f] border border-success/20 p-3 text-[11px] text-success-light">
 
                     Identical schedules — nothing to switch.
                   </div>
@@ -969,7 +936,7 @@ export default function LiveEditor({
 
 function PickBadge({ label, sub }) {
   return (
-    <div className="ed-fadein mb-2.5 rounded-lg border border-accent-cyan/20 bg-accent-cyan/5 px-3 py-2.5">
+    <div className="animate-ed-slide-in mb-2.5 rounded-lg border border-accent-cyan/20 bg-accent-cyan/5 px-3 py-2.5">
       <div className="text-[11px] font-semibold text-accent-cyan">
         {label}
       </div>

@@ -15,7 +15,8 @@
       "Bash(xxd /Users/jjemc/Desktop/activity-dashboard/src/App.jsx)",
       "Bash(python3 -c \":*)",
       "Bash(wc -l /Users/jjemc/Desktop/activity-dashboard/src/components/*.jsx /Users/jjemc/Desktop/activity-dashboard/src/App.jsx /Users/jjemc/Desktop/activity-dashboard/src/utils/*.js /Users/jjemc/Desktop/activity-dashboard/src/constants/*.js)",
-      "Bash(npm install tailwindcss @tailwindcss/vite)"
+      "Bash(npm install tailwindcss @tailwindcss/vite)",
+      "Bash(npx vite build)"
     ]
   }
 }

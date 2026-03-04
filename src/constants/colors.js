@@ -112,6 +112,15 @@ export function getSimColor(group) {
   return SIM_GROUP_COLORS[group] || '#6b7280';
 }
 
+// ── Distance badge colors ──
+
+export function getDistanceBadgeColors(dist) {
+  if (dist > 600) return { color: '#dc2626', bg: '#fef2f2' };
+  if (dist > 400) return { color: '#d97706', bg: '#fffbeb' };
+  if (dist > 200) return { color: '#6b7280', bg: '#f3f4f6' };
+  return { color: '#059669', bg: '#ecfdf5' };
+}
+
 // ── Value gradient helpers ──
 
 export function valueColor(v) {

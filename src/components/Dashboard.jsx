@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
+import { useDashboard } from '../context/DashboardContext';
 import {
   INTENSITY_COLORS, INTENSITY_TEXT, LOCATION_COLORS, DAY_COLORS,
   valueColor, valueTextColor,
 } from '../constants/colors.js';
 import { getDistance, getStartDistance, lookupMeta, shortName } from '../utils/parsers.js';
-import { parseStaff, escapeCSV } from '../utils/scheduleStats.js';
+import { parseStaff, escapeCSV, computeDayStats } from '../utils/scheduleStats.js';
+import DistanceBadge from './shared/DistanceBadge.jsx';
 
 
 /**
@@ -85,21 +87,6 @@ function downloadCSV(content, filename) {
 // Sub-components
 // -----------------------------------------
 
-function DistanceBadge({ dist }) {
-  if (dist === null || dist === undefined) return null;
-  let color = '#059669', bg = '#ecfdf5';
-  if (dist > 600) { color = '#dc2626'; bg = '#fef2f2'; }
-  else if (dist > 400) { color = '#d97706'; bg = '#fffbeb'; }
-  else if (dist > 200) { color = '#6b7280'; bg = '#f3f4f6'; }
-  return (
-    <div
-      className="text-[9px] rounded-[3px] px-1 py-px text-center font-semibold leading-[14px] min-w-[28px] font-mono"
-      style={{ color, background: bg }}
-    >
-      {dist}m
-    </div>
-  );
-}
 
 function DayStatsCard({ dayName, stats, color, slotCount }) {
   const alerts = [];
@@ -111,17 +98,21 @@ function DayStatsCard({ dayName, stats, color, slotCount }) {
   else if (stats.maxDist > 500) alerts.push({ type: 'warn', msg: `Far walk: ${stats.maxDist}m` });
   if (stats.indoorCount === 0 && slotCount >= 3) alerts.push({ type: 'info', msg: 'No indoor option' });
 
+  const avgValColor = stats.avgVal > 65 ? '#27ae60' : stats.avgVal > 45 ? '#d4a847' : '#e74c3c';
+  const maxDistColor = stats.maxDist > 600 ? '#e74c3c' : stats.maxDist > 400 ? '#d97706' : '#888';
+  const indoorColor = stats.indoorCount > 0 ? '#8e44ad' : '#555';
+
   return (
     <div className="flex-[1_1_220px] bg-base-700 rounded-[10px] border border-base-500 p-[18px] min-w-[200px]">
-      <div className="flex items-center gap-2 mb-3.5">
-        <div className="w-1 h-[22px] rounded-sm" style={{ background: color }} />
-        <h4 className="m-0 text-[15px] font-display" style={{ color }}>{dayName}</h4>
+      <div className="flex items-center gap-2 mb-3.5" style={{ '--day-color': color }}>
+        <div className="w-1 h-[22px] rounded-sm bg-[var(--day-color)]" />
+        <h4 className="m-0 text-[15px] font-display text-[var(--day-color)]">{dayName}</h4>
         <span className="text-[10px] text-text-faint ml-auto">{slotCount} slots</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <div className="section-label text-text-muted mb-0.5">Avg Value</div>
-          <div className="text-[22px] font-bold font-mono" style={{ color: stats.avgVal > 65 ? '#27ae60' : stats.avgVal > 45 ? '#d4a847' : '#e74c3c' }}>{stats.avgVal}</div>
+          <div className="text-[22px] font-bold font-mono text-[var(--avg-color)]" style={{ '--avg-color': avgValColor }}>{stats.avgVal}</div>
         </div>
         <div>
           <div className="section-label text-text-muted mb-0.5">Walk Dist</div>
@@ -134,11 +125,11 @@ function DayStatsCard({ dayName, stats, color, slotCount }) {
         </div>
         <div>
           <div className="section-label text-text-muted mb-0.5">Max Walk</div>
-          <div className="text-[17px] font-semibold font-mono" style={{ color: stats.maxDist > 600 ? '#e74c3c' : stats.maxDist > 400 ? '#d97706' : '#888' }}>{stats.maxDist}<span className="text-[10px]">m</span></div>
+          <div className="text-[17px] font-semibold font-mono text-[var(--max-dist-color)]" style={{ '--max-dist-color': maxDistColor }}>{stats.maxDist}<span className="text-[10px]">m</span></div>
         </div>
         <div>
           <div className="section-label text-text-muted mb-0.5">Indoor</div>
-          <div className="text-[17px] font-semibold font-mono" style={{ color: stats.indoorCount > 0 ? '#8e44ad' : '#555' }}>{stats.indoorCount}</div>
+          <div className="text-[17px] font-semibold font-mono text-[var(--indoor-color)]" style={{ '--indoor-color': indoorColor }}>{stats.indoorCount}</div>
         </div>
       </div>
       {/* Intensity flow */}
@@ -146,21 +137,25 @@ function DayStatsCard({ dayName, stats, color, slotCount }) {
         <div className="section-label text-text-muted mb-1">Intensity Flow</div>
         <div className="flex gap-[3px]">
           {stats.intensities.map((int, i) => (
-            <div key={i} className="flex-1 h-2 rounded-[3px]" style={{ background: INTENSITY_COLORS[int] || '#333' }} title={int} />
+            <div key={i} className="flex-1 h-2 rounded-[3px] bg-[var(--int-color)]" style={{ '--int-color': INTENSITY_COLORS[int] || '#333' }} title={int} />
           ))}
         </div>
       </div>
       {alerts.length > 0 && (
         <div className="mt-2.5">
-          {alerts.map((a, i) => (
-            <div key={i} className="text-[10px] px-[7px] py-[3px] rounded-[3px] mb-0.5" style={{
-              background: a.type === 'error' ? '#3d1111' : a.type === 'warn' ? '#3d2e11' : '#112a3d',
-              color: a.type === 'error' ? '#f87171' : a.type === 'warn' ? '#fbbf24' : '#60a5fa',
-              borderLeft: `2px solid ${a.type === 'error' ? '#ef4444' : a.type === 'warn' ? '#f59e0b' : '#3b82f6'}`,
-            }}>
-              {a.msg}
-            </div>
-          ))}
+          {alerts.map((a, i) => {
+            const alertBg = a.type === 'error' ? '#3d1111' : a.type === 'warn' ? '#3d2e11' : '#112a3d';
+            const alertColor = a.type === 'error' ? '#f87171' : a.type === 'warn' ? '#fbbf24' : '#60a5fa';
+            const alertBorder = a.type === 'error' ? '#ef4444' : a.type === 'warn' ? '#f59e0b' : '#3b82f6';
+            return (
+              <div key={i}
+                className="text-[10px] px-[7px] py-[3px] rounded-[3px] mb-0.5 bg-[var(--alert-bg)] text-[var(--alert-color)] border-l-2 border-l-[var(--alert-border)]"
+                style={{ '--alert-bg': alertBg, '--alert-color': alertColor, '--alert-border': alertBorder }}
+              >
+                {a.msg}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -196,6 +191,10 @@ function DetailPanel({ activity, registry, distMatrix, onClose }) {
         .slice(0, 5)
     : [];
 
+  const ioBg = meta.io === 'Indoor' ? '#8e44ad' : '#27ae60';
+  const intensityBg = INTENSITY_COLORS[meta.intensity] || '#333';
+  const intensityText = INTENSITY_TEXT[meta.intensity] || '#fff';
+
   return (
     <div className="fixed top-0 right-0 w-[360px] h-screen bg-base-600 text-text-primary z-[1000] shadow-[-4px_0_30px_rgba(0,0,0,0.5)] overflow-y-auto font-sans border-l-[3px] border-accent-gold">
       <div className="p-6">
@@ -204,8 +203,8 @@ function DetailPanel({ activity, registry, distMatrix, onClose }) {
           <button onClick={onClose} className="bg-transparent border-none text-[#999] text-[22px] cursor-pointer px-1">&times;</button>
         </div>
         <div className="flex gap-2 mb-5 flex-wrap">
-          <span className="text-white px-2.5 py-[3px] rounded text-[11px] font-semibold" style={{ background: meta.io === 'Indoor' ? '#8e44ad' : '#27ae60' }}>{meta.io}</span>
-          <span className="px-2.5 py-[3px] rounded text-[11px] font-semibold" style={{ background: INTENSITY_COLORS[meta.intensity] || '#333', color: INTENSITY_TEXT[meta.intensity] || '#fff' }}>{meta.intensity}</span>
+          <span className="text-white px-2.5 py-[3px] rounded text-[11px] font-semibold bg-[var(--io-bg)]" style={{ '--io-bg': ioBg }}>{meta.io}</span>
+          <span className="px-2.5 py-[3px] rounded text-[11px] font-semibold bg-[var(--int-bg)] text-[var(--int-text)]" style={{ '--int-bg': intensityBg, '--int-text': intensityText }}>{meta.intensity}</span>
           <span className="bg-base-400 text-[#aaa] px-2.5 py-[3px] rounded text-[11px]">{meta.season}</span>
         </div>
         {/* Value bar */}
@@ -214,7 +213,7 @@ function DetailPanel({ activity, registry, distMatrix, onClose }) {
           <div className="flex items-center gap-3">
             <div className="text-4xl font-bold text-accent-gold font-mono">{meta.value}</div>
             <div className="flex-1 bg-base-600 rounded h-2">
-              <div className="h-full rounded" style={{ width: `${meta.value}%`, background: 'linear-gradient(90deg, #8b6914, #d4a847)' }} />
+              <div className="h-full rounded bg-gradient-to-r from-[#8b6914] to-[#d4a847] w-[var(--val-width)]" style={{ '--val-width': `${meta.value}%` }} />
             </div>
           </div>
         </div>
@@ -228,12 +227,15 @@ function DetailPanel({ activity, registry, distMatrix, onClose }) {
         {nearest.length > 0 && (
           <div className="mt-5">
             <div className="text-[11px] text-text-secondary uppercase tracking-[1px] mb-2.5">Nearest Activities</div>
-            {nearest.map(([name, dist]) => (
-              <div key={name} className="flex justify-between py-1.5 text-xs">
-                <span className="text-[#bbb]">{shortName(name)}</span>
-                <span className="font-mono font-semibold" style={{ color: dist < 200 ? '#27ae60' : dist < 500 ? '#d4a847' : '#e74c3c' }}>{dist}m</span>
-              </div>
-            ))}
+            {nearest.map(([name, dist]) => {
+              const distColor = dist < 200 ? '#27ae60' : dist < 500 ? '#d4a847' : '#e74c3c';
+              return (
+                <div key={name} className="flex justify-between py-1.5 text-xs">
+                  <span className="text-[#bbb]">{shortName(name)}</span>
+                  <span className="font-mono font-semibold text-[var(--dist-color)]" style={{ '--dist-color': distColor }}>{dist}m</span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -242,47 +244,11 @@ function DetailPanel({ activity, registry, distMatrix, onClose }) {
 }
 
 // -----------------------------------------
-// Day stats computation
-// -----------------------------------------
-
-function computeDayStats(group, start, end, registry, distMatrix, startLocation) {
-  const slice = group.slice(start, end);
-  const vals = slice.map(a => lookupMeta(a, registry)?.value ?? 0);
-  const avgVal = slice.length ? Math.round(vals.reduce((s, v) => s + v, 0) / slice.length) : 0;
-
-  let totalDist = 0, maxDist = 0, consecutiveIntense = 0, maxConsecutiveIntense = 0;
-  let startDist = null;
-
-  // Add start -> first activity distance
-  if (startLocation && slice.length > 0) {
-    startDist = getStartDistance(startLocation, slice[0], distMatrix, registry.nameMap);
-    if (startDist !== null) { totalDist += startDist; maxDist = Math.max(maxDist, startDist); }
-  }
-
-  for (let i = 0; i < slice.length; i++) {
-    const meta = lookupMeta(slice[i], registry);
-    if (meta?.intensity === 'Intense') {
-      consecutiveIntense++;
-      maxConsecutiveIntense = Math.max(maxConsecutiveIntense, consecutiveIntense);
-    } else {
-      consecutiveIntense = 0;
-    }
-    if (i > 0) {
-      const d = getDistance(slice[i - 1], slice[i], distMatrix, registry.nameMap);
-      if (d !== null) { totalDist += d; maxDist = Math.max(maxDist, d); }
-    }
-  }
-
-  const indoorCount = slice.filter(a => lookupMeta(a, registry)?.io === 'Indoor').length;
-  const intensities = slice.map(a => lookupMeta(a, registry)?.intensity || 'Unknown');
-  return { avgVal, totalDist, maxDist, maxConsecutiveIntense, indoorCount, intensities, startDist };
-}
-
-// -----------------------------------------
 // Main Dashboard
 // -----------------------------------------
 
-export default function Dashboard({ registry, distMatrix, rotations, timeSlots, daySlices, startLocations, editFlags, useEdited, onToggleEdited, onClearEdit }) {
+export default function Dashboard({ rotations, editFlags, useEdited, onToggleEdited, onClearEdit }) {
+  const { registry, distMatrix, timeSlots, daySlices, startLocations } = useDashboard();
   const [rotIdx, setRotIdx] = useState(0);
   const [colorMode, setColorMode] = useState('value');
   const [selectedActivity, setSelectedActivity] = useState(null);
@@ -342,12 +308,12 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
   function getCellStyle(activity) {
     const meta = lookupMeta(activity, registry);
-    if (!meta) return { background: '#333', color: '#e74c3c' };
-    if (colorMode === 'value') return { background: valueColor(meta.value), color: valueTextColor(meta.value) };
-    if (colorMode === 'intensity') return { background: INTENSITY_COLORS[meta.intensity] || '#333', color: INTENSITY_TEXT[meta.intensity] || '#fff' };
-    if (colorMode === 'io') return { background: meta.io === 'Indoor' ? '#6c3483' : '#1e8449', color: '#fff' };
-    if (colorMode === 'location') return { background: LOCATION_COLORS[meta.location] || '#555', color: '#fff' };
-    return { background: '#333', color: '#ccc' };
+    if (!meta) return { '--cell-bg': '#333', '--cell-color': '#e74c3c' };
+    if (colorMode === 'value') return { '--cell-bg': valueColor(meta.value), '--cell-color': valueTextColor(meta.value) };
+    if (colorMode === 'intensity') return { '--cell-bg': INTENSITY_COLORS[meta.intensity] || '#333', '--cell-color': INTENSITY_TEXT[meta.intensity] || '#fff' };
+    if (colorMode === 'io') return { '--cell-bg': meta.io === 'Indoor' ? '#6c3483' : '#1e8449', '--cell-color': '#fff' };
+    if (colorMode === 'location') return { '--cell-bg': LOCATION_COLORS[meta.location] || '#555', '--cell-color': '#fff' };
+    return { '--cell-bg': '#333', '--cell-color': '#ccc' };
   }
 
   const dayColors = daySlices.map(d => DAY_COLORS[d.name] || '#d4a847');
@@ -363,12 +329,7 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
             const hasEdit = !!(editFlags && editFlags[i]);
             return (
             <button key={i} onClick={() => setRotIdx(i)}
-              className="btn-sm flex items-center gap-1 transition-all duration-200"
-              style={{
-                borderColor: rotIdx === i ? '#d4a847' : '#2a3040',
-                background: rotIdx === i ? '#d4a847' : 'transparent',
-                color: rotIdx === i ? '#0f1219' : '#888',
-              }}
+              className={`btn-sm flex items-center gap-1 transition-all duration-200 ${rotIdx === i ? 'border-accent-gold bg-accent-gold text-base-800' : 'border-base-400 bg-transparent text-text-secondary'}`}
             >
               Rot {r.name}
               {hasEdit && (
@@ -386,12 +347,7 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
           <>
             <div className="flex items-center gap-1.5">
               <button onClick={onToggleEdited}
-                className="btn-sm flex items-center gap-[5px] transition-all duration-200"
-                style={{
-                  borderColor: useEdited ? '#22d3ee' : '#2a3040',
-                  background: useEdited ? 'rgba(34,211,238,0.10)' : 'transparent',
-                  color: useEdited ? '#22d3ee' : '#888',
-                }}
+                className={`btn-sm flex items-center gap-[5px] transition-all duration-200 ${useEdited ? 'border-accent-cyan bg-accent-cyan/10 text-accent-cyan' : 'border-base-400 bg-transparent text-text-secondary'}`}
               >
                 <span className="text-[13px] leading-none">{useEdited ? '\u2611' : '\u2610'}</span>
                 Edited
@@ -410,21 +366,11 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] text-text-secondary uppercase tracking-[1px] mr-1">Group</span>
           <button onClick={() => setFocusGroup('all')}
-            className="btn-pill transition-all duration-200"
-            style={{
-              border: focusGroup === 'all' ? '1px solid #d4a847' : '1px solid #2a3040',
-              background: focusGroup === 'all' ? '#d4a847' : 'transparent',
-              color: focusGroup === 'all' ? '#0f1219' : '#666',
-            }}
+            className={`btn-pill transition-all duration-200 ${focusGroup === 'all' ? 'border border-accent-gold bg-accent-gold text-base-800' : 'border border-base-400 bg-transparent text-text-muted'}`}
           >All</button>
           {Array.from({ length: numGroups }, (_, i) => (
             <button key={i} onClick={() => setFocusGroup(i)}
-              className="btn-pill min-w-[24px] text-center font-mono transition-all duration-200"
-              style={{
-                border: focusGroup === i ? '1px solid #d4a847' : '1px solid #2a3040',
-                background: focusGroup === i ? '#d4a847' : 'transparent',
-                color: focusGroup === i ? '#0f1219' : '#666',
-              }}
+              className={`btn-pill min-w-[24px] text-center font-mono transition-all duration-200 ${focusGroup === i ? 'border border-accent-gold bg-accent-gold text-base-800' : 'border border-base-400 bg-transparent text-text-muted'}`}
             >{i + 1}</button>
           ))}
         </div>
@@ -436,12 +382,7 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
           <span className="text-[11px] text-text-secondary uppercase tracking-[1px] mr-1">Color</span>
           {[{ key: 'value', label: 'Value' }, { key: 'intensity', label: 'Intensity' }, { key: 'io', label: 'In/Out' }, { key: 'location', label: 'Zone' }].map(m => (
             <button key={m.key} onClick={() => setColorMode(m.key)}
-              className="btn-pill font-medium transition-all duration-200"
-              style={{
-                border: colorMode === m.key ? '1px solid #d4a847' : '1px solid #2a3040',
-                background: colorMode === m.key ? '#2a2518' : 'transparent',
-                color: colorMode === m.key ? '#d4a847' : '#888',
-              }}
+              className={`btn-pill font-medium transition-all duration-200 ${colorMode === m.key ? 'border border-accent-gold bg-[#2a2518] text-accent-gold' : 'border border-base-400 bg-transparent text-text-secondary'}`}
             >{m.label}</button>
           ))}
         </div>
@@ -477,8 +418,7 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
           <>
             <div className="w-px h-6 bg-base-400" />
             <button onClick={() => setShowWarnings(!showWarnings)}
-              className="btn-pill border border-[#f59e0b] transition-all duration-200 text-warning"
-              style={{ background: showWarnings ? '#3d2e11' : 'transparent' }}
+              className={`btn-pill border border-[#f59e0b] transition-all duration-200 text-warning ${showWarnings ? 'bg-[#3d2e11]' : 'bg-transparent'}`}
             >
               &#x26A0; {registry.warnings.length} Name {registry.warnings.length === 1 ? 'Warning' : 'Warnings'}
             </button>
@@ -502,26 +442,26 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
         <div className="ml-auto flex gap-2.5 items-center flex-wrap">
           {colorMode === 'intensity' && Object.entries(INTENSITY_COLORS).map(([k, c]) => (
             <div key={k} className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: c }} />
+              <div className="w-2.5 h-2.5 rounded-sm bg-[var(--legend-color)]" style={{ '--legend-color': c }} />
               <span className="text-[10px] text-text-secondary">{k}</span>
             </div>
           ))}
           {colorMode === 'value' && (
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-text-secondary">0</span>
-              <div className="w-20 h-2.5 rounded-sm" style={{ background: 'linear-gradient(90deg, rgb(220,230,220), rgb(40,150,70))' }} />
+              <div className="w-20 h-2.5 rounded-sm bg-gradient-to-r from-[rgb(220,230,220)] to-[rgb(40,150,70)]" />
               <span className="text-[10px] text-text-secondary">100</span>
             </div>
           )}
           {colorMode === 'io' && ['Indoor', 'Outdoor'].map(t => (
             <div key={t} className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: t === 'Indoor' ? '#6c3483' : '#1e8449' }} />
+              <div className={`w-2.5 h-2.5 rounded-sm ${t === 'Indoor' ? 'bg-[#6c3483]' : 'bg-[#1e8449]'}`} />
               <span className="text-[10px] text-text-secondary">{t}</span>
             </div>
           ))}
           {colorMode === 'location' && [...locationZones].map(k => (
             <div key={k} className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: LOCATION_COLORS[k] || '#555' }} />
+              <div className="w-2.5 h-2.5 rounded-sm bg-[var(--loc-color)]" style={{ '--loc-color': LOCATION_COLORS[k] || '#555' }} />
               <span className="text-[10px] text-text-secondary">{k}</span>
             </div>
           ))}
@@ -560,7 +500,7 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
       {/* -- Schedule Grid -- */}
       <div className="px-7 py-5 overflow-x-auto">
-        <table className="border-separate border-spacing-0 w-full" style={{ minWidth: isSingleGroup ? 800 : 1050 }}>
+        <table className={`border-separate border-spacing-0 w-full ${isSingleGroup ? 'min-w-[800px]' : 'min-w-[1050px]'}`}>
           <thead>
             {/* Day headers */}
             <tr>
@@ -569,8 +509,8 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                 <React.Fragment key={d.name}>
                   {di > 0 && <th className="w-5" />}
                   <th colSpan={d.end - d.start}
-                    className="text-center text-[13px] font-bold pt-1.5 pb-0.5 font-display tracking-[1px]"
-                    style={{ color: dayColors[di], borderBottom: `2px solid ${dayColors[di]}30` }}
+                    className="text-center text-[13px] font-bold pt-1.5 pb-0.5 font-display tracking-[1px] text-[var(--day-hdr-color)] border-b-2 border-b-[var(--day-hdr-border)]"
+                    style={{ '--day-hdr-color': dayColors[di], '--day-hdr-border': dayColors[di] + '30' }}
                   >{d.name}</th>
                 </React.Fragment>
               ))}
@@ -599,13 +539,12 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                 )}
                 {group.map((activity, si) => {
                   const meta = lookupMeta(activity, registry);
-                  const style = getCellStyle(activity);
+                  const cellVars = getCellStyle(activity);
                   const isNewDay = dayBoundaries.has(si);
                   const isFirstOfDay = daySlices.some(d => d.start === si);
                   const dist = (si > 0 && !isNewDay) ? getDistance(group[si - 1], activity, distMatrix, registry.nameMap) : null;
                   const startDist = (isFirstOfDay && startLocation) ? getStartDistance(startLocation, activity, distMatrix, registry.nameMap) : null;
                   const isHovered = hoveredCell?.g === gi && hoveredCell?.s === si;
-                  const cellH = isSingleGroup ? 80 : 54;
 
                   return (
                     <React.Fragment key={si}>
@@ -629,18 +568,16 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                           onClick={() => setSelectedActivity(activity)}
                           onMouseEnter={() => setHoveredCell({ g: gi, s: si })}
                           onMouseLeave={() => setHoveredCell(null)}
-                          className="rounded-md flex flex-col justify-between transition-all duration-150 relative cursor-pointer"
-                          style={{
-                            ...style,
-                            padding: isSingleGroup ? '10px 10px' : '6px 5px',
-                            minHeight: cellH,
-                            transform: isHovered ? 'scale(1.04)' : 'scale(1)',
-                            boxShadow: isHovered ? '0 4px 16px rgba(0,0,0,0.4)' : 'none',
-                            zIndex: isHovered ? 5 : 1,
-                            border: isHovered ? '1px solid rgba(255,255,255,0.3)' : meta ? '1px solid transparent' : '1px dashed #e74c3c55',
-                          }}
+                          className={`rounded-md flex flex-col justify-between transition-all duration-150 relative cursor-pointer bg-[var(--cell-bg)] text-[var(--cell-color)] ${
+                            isSingleGroup ? 'px-2.5 py-2.5 min-h-[80px]' : 'px-[5px] py-1.5 min-h-[54px]'
+                          } ${
+                            isHovered
+                              ? 'scale-[1.04] shadow-[0_4px_16px_rgba(0,0,0,0.4)] z-[5] border border-white/30'
+                              : meta ? 'scale-100 shadow-none z-[1] border border-transparent' : 'scale-100 shadow-none z-[1] border border-dashed border-[#e74c3c55]'
+                          }`}
+                          style={cellVars}
                         >
-                          <div className="font-semibold leading-[1.2] mb-0.5" style={{ fontSize: isSingleGroup ? 13 : 10 }}>
+                          <div className={`font-semibold leading-[1.2] mb-0.5 ${isSingleGroup ? 'text-[13px]' : 'text-[10px]'}`}>
                             {shortName(activity)}
                           </div>
                           {isSingleGroup && meta && (
@@ -649,8 +586,8 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                             </div>
                           )}
                           <div className="flex justify-between items-center mt-auto">
-                            <span className="opacity-75" style={{ fontSize: isSingleGroup ? 9 : 8 }}>{(meta?.location || '').substring(0, 8)}</span>
-                            <span className="font-bold font-mono bg-black/20 rounded-[3px] px-[5px] py-px" style={{ fontSize: isSingleGroup ? 12 : 9 }}>{meta?.value ?? '?'}</span>
+                            <span className={`opacity-75 ${isSingleGroup ? 'text-[9px]' : 'text-[8px]'}`}>{(meta?.location || '').substring(0, 8)}</span>
+                            <span className={`font-bold font-mono bg-black/20 rounded-[3px] px-[5px] py-px ${isSingleGroup ? 'text-[12px]' : 'text-[9px]'}`}>{meta?.value ?? '?'}</span>
                           </div>
                         </div>
                       </td>
@@ -690,17 +627,20 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
               const avgDist = Math.round(allStats.reduce((s, st) => s + st.totalDist, 0) / allStats.length);
               const maxDistWorst = Math.max(...allStats.map(s => s.maxDist));
               const intensityFlags = allStats.filter(s => s.maxConsecutiveIntense >= 2).length;
+              const avgValColor = avgVal > 65 ? '#27ae60' : avgVal > 45 ? '#d4a847' : '#e74c3c';
+              const maxDistColor = maxDistWorst > 600 ? '#e74c3c' : maxDistWorst > 400 ? '#d97706' : '#888';
+              const intFlagColor = intensityFlags > 0 ? '#e74c3c' : '#27ae60';
               return (
                 <div key={d.name} className="flex-[1_1_220px] bg-base-700 rounded-[10px] border border-base-500 p-[18px] min-w-[200px]">
-                  <div className="flex items-center gap-2 mb-3.5">
-                    <div className="w-1 h-[22px] rounded-sm" style={{ background: dayColors[di] }} />
-                    <h4 className="m-0 text-[15px] font-display" style={{ color: dayColors[di] }}>{d.name}</h4>
+                  <div className="flex items-center gap-2 mb-3.5" style={{ '--day-color': dayColors[di] }}>
+                    <div className="w-1 h-[22px] rounded-sm bg-[var(--day-color)]" />
+                    <h4 className="m-0 text-[15px] font-display text-[var(--day-color)]">{d.name}</h4>
                     <span className="text-[10px] text-text-faint ml-auto">{d.end - d.start} slots</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <div className="section-label text-text-muted mb-0.5">Avg Value</div>
-                      <div className="text-[22px] font-bold font-mono" style={{ color: avgVal > 65 ? '#27ae60' : avgVal > 45 ? '#d4a847' : '#e74c3c' }}>{avgVal}</div>
+                      <div className="text-[22px] font-bold font-mono text-[var(--avg-color)]" style={{ '--avg-color': avgValColor }}>{avgVal}</div>
                     </div>
                     <div>
                       <div className="section-label text-text-muted mb-0.5">Avg Walk</div>
@@ -708,11 +648,11 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                     </div>
                     <div>
                       <div className="section-label text-text-muted mb-0.5">Worst Max Walk</div>
-                      <div className="text-[17px] font-semibold font-mono" style={{ color: maxDistWorst > 600 ? '#e74c3c' : maxDistWorst > 400 ? '#d97706' : '#888' }}>{maxDistWorst}<span className="text-[10px]">m</span></div>
+                      <div className="text-[17px] font-semibold font-mono text-[var(--max-dist-color)]" style={{ '--max-dist-color': maxDistColor }}>{maxDistWorst}<span className="text-[10px]">m</span></div>
                     </div>
                     <div>
                       <div className="section-label text-text-muted mb-0.5">Intensity Flags</div>
-                      <div className="text-[17px] font-semibold font-mono" style={{ color: intensityFlags > 0 ? '#e74c3c' : '#27ae60' }}>{intensityFlags}<span className="text-[10px]"> / {numGroups}</span></div>
+                      <div className="text-[17px] font-semibold font-mono text-[var(--flag-color)]" style={{ '--flag-color': intFlagColor }}>{intensityFlags}<span className="text-[10px]"> / {numGroups}</span></div>
                     </div>
                   </div>
                 </div>
@@ -733,18 +673,10 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
           {/* Group toggles */}
           <div className="flex items-center gap-1">
             <button onClick={() => setStaffGroups(new Set(Array.from({ length: numGroups }, (_, i) => i)))}
-              className="px-2 py-[3px] rounded-[3px] text-[9px] font-semibold border border-base-400 cursor-pointer transition-all duration-200"
-              style={{
-                background: staffGroups.size === numGroups ? '#2a3040' : 'transparent',
-                color: staffGroups.size === numGroups ? '#d4a847' : '#555',
-              }}
+              className={`px-2 py-[3px] rounded-[3px] text-[9px] font-semibold border border-base-400 cursor-pointer transition-all duration-200 ${staffGroups.size === numGroups ? 'bg-base-400 text-accent-gold' : 'bg-transparent text-text-faint'}`}
             >All</button>
             <button onClick={() => setStaffGroups(new Set())}
-              className="px-2 py-[3px] rounded-[3px] text-[9px] font-semibold border border-base-400 cursor-pointer transition-all duration-200"
-              style={{
-                background: staffGroups.size === 0 ? '#2a3040' : 'transparent',
-                color: staffGroups.size === 0 ? '#d4a847' : '#555',
-              }}
+              className={`px-2 py-[3px] rounded-[3px] text-[9px] font-semibold border border-base-400 cursor-pointer transition-all duration-200 ${staffGroups.size === 0 ? 'bg-base-400 text-accent-gold' : 'bg-transparent text-text-faint'}`}
             >None</button>
           </div>
 
@@ -759,12 +691,7 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                     return next;
                   });
                 }}
-                  className="px-1.5 py-[3px] rounded-[3px] text-[9px] font-semibold min-w-[22px] text-center cursor-pointer font-mono transition-all duration-200"
-                  style={{
-                    border: on ? '1px solid #d4a847' : '1px solid #2a3040',
-                    background: on ? '#d4a847' : 'transparent',
-                    color: on ? '#0f1219' : '#555',
-                  }}
+                  className={`px-1.5 py-[3px] rounded-[3px] text-[9px] font-semibold min-w-[22px] text-center cursor-pointer font-mono transition-all duration-200 ${on ? 'border border-accent-gold bg-accent-gold text-base-800' : 'border border-base-400 bg-transparent text-text-faint'}`}
                 >{gi + 1}</button>
               );
             })}
@@ -791,12 +718,8 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
                     return next;
                   });
                 }}
-                  className="px-2 py-[3px] rounded-[3px] text-[9px] font-semibold min-w-[24px] text-center cursor-pointer font-mono transition-all duration-200"
-                  style={{
-                    border: on ? `1px solid ${dayColors[di]}` : '1px solid #2a3040',
-                    background: on ? dayColors[di] : 'transparent',
-                    color: on ? '#0f1219' : '#555',
-                  }}
+                  className={`px-2 py-[3px] rounded-[3px] text-[9px] font-semibold min-w-[24px] text-center cursor-pointer font-mono transition-all duration-200 ${on ? 'border border-[var(--day-btn-color)] bg-[var(--day-btn-color)] text-base-800' : 'border border-base-400 bg-transparent text-text-faint'}`}
+                  style={{ '--day-btn-color': dayColors[di] }}
                 >{shortLabel}</button>
               );
             })}
@@ -831,9 +754,9 @@ export default function Dashboard({ registry, distMatrix, rotations, timeSlots, 
 
             return (
               <div key={d.name} className="flex-[1_1_220px] bg-base-700 rounded-[10px] border border-base-500 p-[18px] min-w-[200px]">
-                <div className="flex items-center gap-2 mb-3.5">
-                  <div className="w-1 h-[22px] rounded-sm" style={{ background: dayColors[di] }} />
-                  <h4 className="m-0 text-[15px] font-display" style={{ color: dayColors[di] }}>{d.name}</h4>
+                <div className="flex items-center gap-2 mb-3.5" style={{ '--day-color': dayColors[di] }}>
+                  <div className="w-1 h-[22px] rounded-sm bg-[var(--day-color)]" />
+                  <h4 className="m-0 text-[15px] font-display text-[var(--day-color)]">{d.name}</h4>
                   <span className="text-[10px] text-text-faint ml-auto">{d.end - d.start} slots</span>
                 </div>
 

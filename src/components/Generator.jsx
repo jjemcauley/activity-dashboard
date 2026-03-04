@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { useDashboard } from "../context/DashboardContext";
 import { getDistance, shortName } from "../utils/parsers.js";
 import {
   getCellColors,
@@ -550,14 +551,8 @@ function validateLatinSquare(matrix) {
 // REACT COMPONENT
 // ═════════════════════════════════════════════════════════════════════
 
-export default function Generator({
-  registry,
-  distMatrix,
-  timeSlots,
-  daySlices,
-  similarities,
-  startLocations,
-}) {
+export default function Generator() {
+  const { registry, distMatrix, timeSlots, daySlices, similarities, startLocations } = useDashboard();
   const [rotations, setRotations] = useState([]); // array of { matrix, stats, validation }
   const [generating, setGenerating] = useState(false);
   const [numGroups, setNumGroups] = useState(12);
@@ -781,10 +776,10 @@ export default function Generator({
                   <th
                     key={di}
                     colSpan={day.end - day.start}
-                    className="px-2 py-1.5 text-[11px] font-bold text-center tracking-wide"
+                    className="px-2 py-1.5 text-[11px] font-bold text-center tracking-wide text-[var(--day-color)] border-b-2 border-[var(--day-color-dim)]"
                     style={{
-                      color: DAY_COLORS[day.name] || "#a78bfa",
-                      borderBottom: `2px solid ${DAY_COLORS[day.name] || "#a78bfa"}33`,
+                      '--day-color': DAY_COLORS[day.name] || "#a78bfa",
+                      '--day-color-dim': (DAY_COLORS[day.name] || "#a78bfa") + "33",
                     }}
                   >
                     {day.name}
@@ -853,21 +848,21 @@ export default function Generator({
                         }`}
                       >
                         <div
-                          className={`rounded-[5px] px-[5px] py-1 h-[52px] flex flex-col justify-between relative overflow-hidden ${
+                          className={`rounded-[5px] px-[5px] py-1 h-[52px] flex flex-col justify-between relative overflow-hidden bg-[var(--cell-bg)] ${
                             isAdjacentViolation
                               ? "border-2 border-[#ef4444]"
                               : isBoosted
                                 ? "border border-[#a78bfa55]"
                                 : "border border-transparent"
                           }`}
-                          style={{ backgroundColor: colors.bg }}
+                          style={{ '--cell-bg': colors.bg }}
                           title={`${activity.name}\nValue: ${activity.value}\nGroup: ${simGroup || "none"}\nZone: ${activity.zone}`}
                         >
                           {/* Similarity group indicator */}
                           {simGroup && (
                             <div
-                              className="absolute top-0 right-0 w-1.5 h-1.5 rounded-tr rounded-bl opacity-80"
-                              style={{ backgroundColor: simColor }}
+                              className="absolute top-0 right-0 w-1.5 h-1.5 rounded-tr rounded-bl opacity-80 bg-[var(--sim-color)]"
+                              style={{ '--sim-color': simColor }}
                             />
                           )}
 
@@ -880,8 +875,8 @@ export default function Generator({
 
                           {/* Activity name */}
                           <div
-                            className="text-[10px] font-semibold leading-tight mt-0.5"
-                            style={{ color: colors.text }}
+                            className="text-[10px] font-semibold leading-tight mt-0.5 text-[var(--cell-text)]"
+                            style={{ '--cell-text': colors.text }}
                           >
                             {shortName(activity.name)}
                           </div>
@@ -892,8 +887,8 @@ export default function Generator({
                               {activity.zone}
                             </span>
                             <span
-                              className="text-[9px] font-bold font-mono bg-black/25 rounded-[3px] px-1 py-px"
-                              style={{ color: colors.text }}
+                              className="text-[9px] font-bold font-mono bg-black/25 rounded-[3px] px-1 py-px text-[var(--cell-text)]"
+                              style={{ '--cell-text': colors.text }}
                             >
                               {activity.value}
                             </span>
@@ -964,8 +959,8 @@ export default function Generator({
             {Object.entries(SIM_GROUP_COLORS).map(([group, color]) => (
               <div key={group} className="flex items-center gap-1.5">
                 <div
-                  className="w-2 h-2 rounded-sm"
-                  style={{ backgroundColor: color }}
+                  className="w-2 h-2 rounded-sm bg-[var(--legend-color)]"
+                  style={{ '--legend-color': color }}
                 />
                 <span className="text-[11px] text-base-100">{group}</span>
               </div>

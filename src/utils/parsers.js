@@ -36,6 +36,18 @@ function normalise(name) {
     .trim();
 }
 
+/** Word-overlap similarity: fraction of shared words (Jaccard-like) */
+function wordOverlap(a, b) {
+  const wordsA = new Set(a.split(/\s+/).filter(w => w.length > 0));
+  const wordsB = new Set(b.split(/\s+/).filter(w => w.length > 0));
+  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+  let shared = 0;
+  for (const w of wordsA) if (wordsB.has(w)) shared++;
+  const smaller = Math.min(wordsA.size, wordsB.size);
+  // Return fraction of the smaller set's words that appear in the larger set
+  return shared / smaller;
+}
+
 /** Levenshtein distance */
 function levenshtein(a, b) {
   const m = a.length,
@@ -379,7 +391,30 @@ export function buildRegistry(
       }
     }
 
-    // Fuzzy match
+    // Word-overlap match: if most words are shared, it's likely the same activity
+    // (handles "High Ropes (Aerial Trust Dive)" vs "High Ropes - Aerial Trust Dive")
+    let bestOverlap = 0,
+      bestOverlapMatch = null;
+    for (const cn of metaNames) {
+      const overlap = wordOverlap(normRaw, normalise(cn));
+      if (overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestOverlapMatch = cn;
+      }
+    }
+    if (bestOverlap >= 0.75 && bestOverlapMatch) {
+      canonical[bestOverlapMatch].aliases.push(rawName);
+      nameMap[rawName] = bestOverlapMatch;
+      warnings.push({
+        name: rawName,
+        source,
+        issue: `Word-overlap matched (${Math.round(bestOverlap * 100)}%)`,
+        suggestion: bestOverlapMatch,
+      });
+      return;
+    }
+
+    // Fuzzy match (character-level levenshtein)
     let bestDist = Infinity,
       bestMatch = null;
     for (const cn of metaNames) {
