@@ -36,6 +36,71 @@ const CONFIG = {
 };
 
 // ═════════════════════════════════════════════════════════════════════
+// SEASON FILTERING AND ACTIVITY PARTITIONING
+// ═════════════════════════════════════════════════════════════════════
+
+/**
+ * Filter activities to those available in the selected season.
+ * Season field formats: "Fall", "Spring/Fall", "All", etc.
+ * "All" and empty/missing values match every season.
+ * If no season is provided (empty string), returns all activities.
+ */
+function filterBySeason(activities, season) {
+  if (!season) return activities;
+  const norm = season.trim().toLowerCase();
+  return activities.filter(act => {
+    const raw = (act.season || "").trim();
+    if (!raw || raw.toLowerCase() === "all") return true;
+    return raw.split("/").map(p => p.trim().toLowerCase()).includes(norm);
+  });
+}
+
+/**
+ * Partition activities across N rotations to balance total value.
+ *
+ * Algorithm: sort descending by value, then distribute in snake order.
+ * Snake order: for each "round", assign in forward then reverse direction.
+ *
+ * Example with 6 activities, N=2:
+ *   Sorted values: [10, 9, 8, 7, 6, 5]
+ *   Round 1 (forward):  R0 gets 10, R1 gets 9
+ *   Round 2 (reverse):  R1 gets 8, R0 gets 7
+ *   Round 3 (forward):  R0 gets 6, R1 gets 5
+ *   Result: R0=[10,7,6]=23, R1=[9,8,5]=22  -- balanced
+ *
+ * Returns array of N activity arrays, index 0 = highest-value partition.
+ * When numRotations <= 1, returns [pool] (single bucket = full pool).
+ */
+function partitionActivities(pool, numRotations) {
+  if (numRotations <= 1) return [pool];
+
+  const sorted = [...pool].sort((a, b) => (b.value || 0) - (a.value || 0));
+  const buckets = Array.from({ length: numRotations }, () => []);
+
+  let forward = true;
+  let bucketIdx = 0;
+
+  for (const act of sorted) {
+    buckets[bucketIdx].push(act);
+    if (forward) {
+      bucketIdx++;
+      if (bucketIdx >= numRotations) {
+        bucketIdx = numRotations - 1;
+        forward = false;
+      }
+    } else {
+      bucketIdx--;
+      if (bucketIdx < 0) {
+        bucketIdx = 0;
+        forward = true;
+      }
+    }
+  }
+
+  return buckets;
+}
+
+// ═════════════════════════════════════════════════════════════════════
 // SCORING FUNCTIONS
 // ═════════════════════════════════════════════════════════════════════
 
@@ -538,6 +603,7 @@ export default function Generator() {
           maxGroups: entry.metadata.maxGroups || 99,
           similarityGroup: similarities?.activityToGroup[name] || null,
           zone: entry.metadata.location || "Unknown",
+          season: entry.metadata.season || "",   // raw season string, e.g. "Fall", "Spring/Fall", "All"
         });
       }
     }
