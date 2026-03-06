@@ -1,0 +1,25 @@
+Activity Name,UID,Season,Activity General Location,GPS Location,Indoor / Outdoor,Location Description,Max Activity Groups,Minimum/Ideal Staff p/Activity Group,Compressable & Scalable?,Pre-group setup time?,Intensity,Customer Value Rating,Unique? (Can't do at school?),Activity Similarity Grouping
+Pump Track (The Park),1,Fall,Gwitmock,"45.2519254283717, -79.62343671519668",Indoor,The Park,1,(2/2),Scalable,Minimal,Intense,90,Yes,Skateboards
+Archery (The Park),2,Fall,Gwitmock,"45.25175199993653, -79.62434496193046",Outdoor,Behind pumptrack,1,(1/2),Compressable,Minimal,Mild,70,Yes,Precision
+Low Ropes,3,All,Gwitmock Path,"45.252786238018345, -79.62062915206893",Outdoor,The Park,2, (1/2),Compressable,Minimal,Intense,50,Yes,
+High Ropes (Drop Zone),4,All,High Ropes,"45.24738603416898, -79.61618297425116",Outdoor,,1,(2/2),Compressable,Substantial,Moderate,85,Yes,Courage / Arial
+Giant Swing,5,All,Main Camp,"45.249571532210396, -79.61874377201534",Outdoor,,1,(2/4),Neither,Substantial,Moderate,100,Yes,Courage / Arial
+Photo Scavenger Hunt,6,Fall,Main Camp,"45.24921432362173, -79.61763865768977",Outdoor,Music hall starting location,1,(1/2),Both,Minimal,Mild,10,No,Auxilary
+Arts n' Crafts,7,All,Main Camp,"45.2500417853363, -79.61794424349236",Indoor,,1,(1/2),Compressable,Substantial,Minimal,35,No,Auxilary
+High Ropes (Blocks),8,All,High Ropes,"45.24738603416898, -79.61618297425116",Outdoor,,1,(1/2),Neither,Substantial,Intense,70,Yes,Courage / Arial
+Hike the Trail (Front Gate Gazebo),9,Fall,Main Camp,"45.24936321884686, -79.61538659617004",Outdoor,,2,(1/2),Both,Minimal,Moderate,55,Yes,
+Pickleball,10,Spring/Fall,Main Camp,"45.248127540855364, -79.61556133737521",Outdoor,,1,(1/2),Both,Minimal,Intense,50,Mixed,Racquet
+High Ropes (Vertical Play Ground),11,Spring/Fall,High Ropes,"45.24738603416898, -79.61618297425116",Outdoor,,1,(1/2),Neither,Substantial,Intense,80,Yes,Courage / Arial
+Broomball,12,All,Main Camp,"45.247876016752215, -79.61565235039517",Outdoor,,1,(1/2),Both,Minimal,Minimal,15,No,Racquet
+Disc Golf,13,Spring/Fall,Gwitmock,"45.25080902686976, -79.62277924674056",Outdoor,,1,(1/2),Compressable,Minimal,Mild,20,Mixed,Lesuire Sport
+Driving Range (Hill Top),14,Spring/Fall,Gwitmock,"45.24927027043142, -79.62300703575124",Outdoor,,1,(1/2),Compressable,Minimal,Mild,55,Mixed,Lesuire Sport
+Zipline,15,Spring/Fall,High Ropes,"45.24738603416898, -79.61618297425116",Outdoor,,1,(4/4),Compressable,Substantial,Intense,100,Yes,Courage / Arial
+High Ropes (Crate Stacking),16,All,High Ropes,"45.24738603416898, -79.61618297425116",Outdoor,,1,(1/2),Compressable,Substantial,Moderate,80,Yes,Courage / Arial
+Archery Tag (Tennis Courts),17,All,Main Camp,"45.2476194574414, -79.61499448192477",Outdoor,,1,(1/2),Compressable,Minimal,Intense,55,Yes,Precision
+Indoor Climbing Wall (Field House),18,All,Fieldhouse,"45.24800349462689, -79.61436037499438",Indoor,,1,(2/2),Neither,Substantial,Intense,80,Yes,Courage / Arial
+Scooters & Longboards,19,Spring/Fall,Main Camp,"45.25017174063188, -79.61862792335054",Outdoor,,1,(1/2),Compressable,Minimal,Moderate,50,Yes,Skateboards
+High Ropes (Aerial Trust Dive),20,All,High Ropes,"45.24738603416898, -79.61618297425116",Outdoor,,1,(1/2),Neither,Substantial,Moderate,85,Yes,Courage / Arial
+Tennis,21,Spring/Fall,Main Camp,"45.2476194574414, -79.61499448192477",Outdoor,,1,(1/2),Compressable,Minimal,Moderate,45,Mixed,Racquet
+Team Building Games (Music Hall),22,All,Main Camp,"45.24931895911569, -79.61772604939787",Indoor,,1,(1/2),Both,Minimal,Minimal,25,No,Auxilary
+Ball Hockey,27,Spring/Fall,Main Camp,"45.247876016752215, -79.61565235039517",Outdoor,,1,(1/1),Both,Minimal,,,No,
+High Ropes (Team Balance),32,Spring/Fall,High Ropes,"45.24738603416898, -79.61618297425116",Outdoor,,1,(2/2),Neither,Substantial,Intense,75,Yes,
