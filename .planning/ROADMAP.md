@@ -27,7 +27,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Uploading a metadata CSV that includes a location/zone column causes the generator to reflect those zones — no code change required
   2. Activities with changed or new zone assignments in the CSV are correctly reflected without a redeploy
   3. The existing DashboardContext registry is the single source of truth for zone data at generation time
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Remove ZONE_MAP and getZone() from Generator.jsx; wire zone from registry metadata; expand parsers.js location column regex
 
 ### Phase 2: Generation Engine
 **Goal**: Generator produces valid Latin square schedules for N=1 through N=max, filtered by season, with activity partitioning and value optimization
@@ -69,7 +72,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 0/TBD | Not started | - |
+| 1. Data Foundation | 0/1 | Not started | - |
 | 2. Generation Engine | 0/TBD | Not started | - |
 | 3. Constraint Scoring | 0/TBD | Not started | - |
 | 4. UI and Reporting | 0/TBD | Not started | - |
