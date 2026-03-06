@@ -13,7 +13,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **GEN-02**: Generator produces complete Latin square schedules for N=1 through N=max rotation counts in a single run
 - [x] **GEN-03**: For N>1 rotations, generator partitions activities across rotations optimizing for equal total value per rotation
 - [ ] **GEN-04**: Each rotation is a valid Latin square — every activity appears exactly once per row and once per column
-- [ ] **GEN-05**: Generator maximizes total activity value across the schedule using greedy slot-by-slot scoring
+- [x] **GEN-05**: Generator maximizes total activity value across the schedule using greedy slot-by-slot scoring
 
 ### Constraints
 
@@ -62,7 +62,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GEN-02 | Phase 2 | Pending |
 | GEN-03 | Phase 2 | Complete |
 | GEN-04 | Phase 2 | Pending |
-| GEN-05 | Phase 2 | Pending |
+| GEN-05 | Phase 2 | Complete |
 | CON-01 | Phase 3 | Pending |
 | CON-02 | Phase 3 | Pending |
 | CON-03 | Phase 3 | Pending |

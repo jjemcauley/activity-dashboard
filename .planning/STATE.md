@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Completed 02-00-PLAN.md
-last_updated: "2026-03-06T20:02:54.175Z"
-last_activity: 2026-03-06 — Completed 01-01-PLAN.md (Remove ZONE_MAP)
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-06T20:25:33Z"
+last_activity: 2026-03-06 — Completed 02-01-PLAN.md (Pure algorithm functions)
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 4
-  completed_plans: 2
-  percent: 100
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** Generate the most theoretically optimal activity schedule that maximizes activity value while respecting physical, operational, and experience constraints — so staff don't have to build schedules by hand.
-**Current focus:** Phase 1 — Data Foundation
+**Current focus:** Phase 2 — Generation Engine
 
 ## Current Position
 
-Phase: 1 of 4 (Data Foundation) -- COMPLETE
-Plan: 1 of 1 in current phase
-Status: Phase 1 complete, ready for Phase 2 planning
-Last activity: 2026-03-06 — Completed 01-01-PLAN.md (Remove ZONE_MAP)
+Phase: 2 of 4 (Generation Engine)
+Plan: 2 of 3 in current phase (02-00 complete, 02-01 complete, 02-02 remaining)
+Status: Executing Phase 2 — pure algorithm functions added, orchestrator next
+Last activity: 2026-03-06 — Completed 02-01-PLAN.md (Pure algorithm functions)
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 8min
-- Total execution time: 8min
+- Total plans completed: 3
+- Average duration: 4min
+- Total execution time: 11min
 
 **By Phase:**
 
@@ -45,12 +45,13 @@ Progress: [██████████] 100%
 |-------|-------|-------|----------|
 | Phase 01 P01 | 8min | 3 tasks | 2 files |
 
-**Recent Trend:**
-- Last 5 plans: 8min
-- Trend: baseline
-
 *Updated after each plan completion*
 | Phase 02 P00 | 2min | 2 tasks | 3 files |
+| Phase 02 P01 | 1min | 2 tasks | 1 file |
+
+**Recent Trend:**
+- Last 5 plans: 8min, 2min, 1min
+- Trend: accelerating
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Used entry.metadata.location with fallback to Unknown rather than a new lookup function
 - [Phase 01]: Anchored ^zone$ regex to avoid matching unrelated columns like Zone Notes
 - [Phase 02]: Inlined filterBySeason and partitionActivities in test file to avoid React/DOM dependency in node tests
+- [Phase 02]: Placed filterBySeason and partitionActivities as module-level pure functions for testability
+- [Phase 02]: availableSeasons excludes 'All' wildcard from selectable list
 
 ### Pending Todos
 
@@ -77,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:02:54.173Z
-Stopped at: Completed 02-00-PLAN.md
+Last session: 2026-03-06T20:25:33Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
