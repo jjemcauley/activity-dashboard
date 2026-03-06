@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 1 plan
 
 Plans:
-- [ ] 01-01-PLAN.md — Remove ZONE_MAP and getZone() from Generator.jsx; wire zone from registry metadata; expand parsers.js location column regex
+- [x] 01-01-PLAN.md — Remove ZONE_MAP and getZone() from Generator.jsx; wire zone from registry metadata; expand parsers.js location column regex
 
 ### Phase 2: Generation Engine
 **Goal**: Generator produces valid Latin square schedules for N=1 through N=max, filtered by season, with activity partitioning and value optimization
@@ -41,7 +41,11 @@ Plans:
   2. For N>1, each rotation receives a distinct, non-overlapping activity pool partitioned to equalize total value across rotations
   3. Only activities whose season metadata matches the selected season appear in generated schedules
   4. The greedy slot-by-slot algorithm fills each slot with the highest-value remaining valid activity
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Add filterBySeason and partitionActivities pure functions; add season field to activities useMemo; add availableSeasons useMemo
+- [ ] 02-02-PLAN.md — Wire multi-rotation orchestrator, refactor state shape, add season selector UI, add N-count tabs and rotation sub-tabs
 
 ### Phase 3: Constraint Scoring
 **Goal**: Generated schedules respect Gwitmock, similarity, walk distance, and cross-rotation quality constraints
@@ -73,6 +77,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 1/1 | Complete   | 2026-03-06 |
-| 2. Generation Engine | 0/TBD | Not started | - |
+| 2. Generation Engine | 0/2 | Planned | - |
 | 3. Constraint Scoring | 0/TBD | Not started | - |
 | 4. UI and Reporting | 0/TBD | Not started | - |
