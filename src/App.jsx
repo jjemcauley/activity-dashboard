@@ -1,21 +1,19 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import FileUploader from './components/FileUploader';
-import Dashboard from './components/Dashboard';
-import LiveEditor from './components/LiveEditor';
-import Generator from './components/Generator';
-import Builder from './components/Builder';
-import DataView from './components/DataView';
 import { storage } from './utils/storage';
 import { processFiles } from './utils/processFiles';
 import { DashboardProvider } from './context/DashboardContext';
+import { TABS } from './constants/tabs';
 
-const TABS = [
-  { id: 'dashboard', label: 'Dashboard', accent: '#d4a847' },
-  { id: 'editor',    label: 'Live Editor', accent: '#22d3ee' },
-  { id: 'builder',   label: 'Builder', accent: '#f97316' },
-  { id: 'generator', label: 'Generator', accent: '#a78bfa' },
-  { id: 'data',      label: 'Data', accent: '#34d399' },
-];
+/** Load all CSVs from storage and run processFiles. Returns processed data. */
+function loadFromStorage() {
+  return processFiles(
+    storage.loadCSV('metadata'),
+    storage.loadCSV('distances'),
+    storage.loadCSV('schedule'),
+    storage.loadCSV('similarities'),
+  );
+}
 
 export default function App() {
   const [mode, setMode] = useState('loading');
@@ -32,13 +30,7 @@ export default function App() {
   useEffect(() => {
     if (storage.hasAllFiles()) {
       try {
-        const data = processFiles(
-          storage.loadCSV('metadata'),
-          storage.loadCSV('distances'),
-          storage.loadCSV('schedule'),
-          storage.loadCSV('similarities'),
-        );
-        setDashData(data);
+        setDashData(loadFromStorage());
         setMode('app');
       } catch (e) {
         console.warn('Failed to load saved data, clearing:', e);
@@ -56,13 +48,7 @@ export default function App() {
     if (files === null) {
       if (storage.hasAllFiles()) {
         try {
-          const data = processFiles(
-            storage.loadCSV('metadata'),
-            storage.loadCSV('distances'),
-            storage.loadCSV('schedule'),
-            storage.loadCSV('similarities'),
-          );
-          setDashData(data);
+          setDashData(loadFromStorage());
           setMode('app');
         } catch (e) {
           setLoadError(e.message);
@@ -149,6 +135,20 @@ export default function App() {
     similarities: dashData.similarities,
   }) : null, [dashData]);
 
+  // Tab-specific props lookup
+  const getTabProps = (id) => {
+    switch (id) {
+      case 'dashboard':
+        return { rotations: effectiveRotations, editFlags, useEdited, onToggleEdited: () => setUseEdited(v => !v), onClearEdit: handleClearEdit };
+      case 'editor':
+        return { rotations: effectiveRotations, onSave: handleSaveEdits, savedEdits };
+      case 'builder':
+        return { rotations: effectiveRotations, onSave: handleSaveEdits, persistedState: builderState, onStateChange: setBuilderState };
+      default:
+        return {};
+    }
+  };
+
   // --- Loading ---
   if (mode === 'loading') {
     return (
@@ -181,29 +181,29 @@ export default function App() {
 
         {/* --- Top Nav Bar --- */}
         <div
-          className="bg-gradient-to-br from-base-600 to-base-800 px-7 flex items-stretch justify-between border-b-2 border-[var(--tab-accent)]"
+          className="bg-base-800 px-7 flex items-stretch justify-between border-b border-base-500"
           style={{ '--tab-accent': activeTab.accent }}
         >
           <div className="flex items-stretch gap-0">
             <div className="flex items-center pr-7 mr-1 border-r border-base-500">
               <h1 className="m-0 text-lg font-display text-text-primary tracking-wide whitespace-nowrap">
                 Fall Activity Matrix
-                <span className="text-text-faint font-normal text-[13px] ml-2">SR 2026</span>
+                <span className="text-text-faint font-normal text-[14px] ml-2">SR 2026</span>
               </h1>
             </div>
 
             {TABS.map(t => {
               const active = tab === t.id;
               const showBadge = t.id === 'dashboard' && hasAnyEdits;
-              const showSimBadge = t.id === 'generator' && hasSimilarities;
-              const isDisabled = t.id === 'generator' && !hasSimilarities;
+              const showSimBadge = t.requiresSimilarities && hasSimilarities;
+              const isDisabled = t.requiresSimilarities && !hasSimilarities;
 
               return (
                 <button
                   key={t.id}
                   onClick={() => !isDisabled && setTab(t.id)}
                   title={isDisabled ? 'Upload similarities file to enable' : undefined}
-                  className={`py-3.5 px-5 bg-transparent border-0 border-b-3 border-solid text-[13px] font-sans -mb-0.5 flex items-center gap-1.5 transition-all duration-150 ${
+                  className={`py-4 px-6 bg-transparent border-0 border-b-2 border-solid text-[14px] font-sans -mb-0.5 flex items-center gap-1.5 transition-all duration-150 ${
                     active ? 'font-bold' : 'font-medium'
                   } ${
                     isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
@@ -232,50 +232,29 @@ export default function App() {
           <div className="flex items-center gap-3">
             {/* Similarities indicator */}
             {hasSimilarities && (
-              <div className="text-[10px] text-accent-purple flex items-center gap-1">
+              <div className="text-[12px] text-accent-purple flex items-center gap-1">
                 <span className="text-xs">{'\ud83d\uddc7'}</span>
                 {Object.keys(dashData.similarities.groups).length} similarity groups
               </div>
             )}
             <button
               onClick={handleReset}
-              className="py-1.5 px-3 rounded-md border border-base-400 bg-transparent text-text-faint text-[11px] cursor-pointer transition-all duration-150 font-sans"
+              className="py-1.5 px-3 rounded-md border border-base-400 bg-transparent text-text-faint text-[13px] cursor-pointer transition-all duration-150 font-sans"
             >{'\u21bb'} Re-upload</button>
           </div>
         </div>
 
         {/* --- Tab Content --- */}
         <DashboardProvider value={dashCtx}>
-          {tab === 'dashboard' && (
-            <Dashboard
-              rotations={effectiveRotations}
-              editFlags={editFlags}
-              useEdited={useEdited}
-              onToggleEdited={() => setUseEdited(v => !v)}
-              onClearEdit={handleClearEdit}
-            />
-          )}
-          {tab === 'editor' && (
-            <LiveEditor
-              rotations={effectiveRotations}
-              onSave={handleSaveEdits}
-              savedEdits={savedEdits}
-            />
-          )}
-          {tab === 'builder' && (
-            <Builder
-              rotations={effectiveRotations}
-              onSave={handleSaveEdits}
-              persistedState={builderState}
-              onStateChange={setBuilderState}
-            />
-          )}
-          {tab === 'generator' && hasSimilarities && (
-            <Generator />
-          )}
-          {tab === 'data' && (
-            <DataView />
-          )}
+          <Suspense fallback={<div className="p-8 text-center text-text-muted">Loading...</div>}>
+            {TABS.map(t => {
+              if (tab !== t.id) return null;
+              if (t.requiresSimilarities && !hasSimilarities) return null;
+              const TabComponent = t.component;
+              const props = getTabProps(t.id);
+              return <TabComponent key={t.id} {...props} />;
+            })}
+          </Suspense>
         </DashboardProvider>
       </div>
     );

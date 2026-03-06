@@ -1,6 +1,5 @@
-import {
-  parseMetadata, parseDistances, parseSchedule, buildRegistry, parseSimilarities,
-} from './parsers.js';
+import { parseMetadata, parseDistances, parseSchedule, parseSimilarities } from './parsers.js';
+import { buildRegistry } from './registry.js';
 
 /**
  * Process raw CSV texts into the structured data the dashboard needs.

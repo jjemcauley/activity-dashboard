@@ -83,12 +83,12 @@ export default function DataView() {
           {/* Groups */}
           <div className="flex flex-col gap-4">
             {groupNames.map(groupName => (
-              <div key={groupName} className="bg-base-700 rounded-lg border border-base-500 p-4">
+              <div key={groupName} className="bg-base-700 rounded-xl border border-base-500 p-4">
                 <div className="flex items-center gap-2.5 mb-3">
                   <span className="text-sm font-bold text-accent-green font-display">
                     {groupName}
                   </span>
-                  <span className="text-[10px] py-0.5 px-2 rounded-xl bg-accent-green/10 text-accent-green font-semibold">
+                  <span className="text-[11px] py-0.5 px-2 rounded-xl bg-accent-green/10 text-accent-green font-semibold">
                     {grouped[groupName].length} activities
                   </span>
                 </div>
@@ -99,7 +99,7 @@ export default function DataView() {
                       <div className="text-xs font-semibold text-text-primary mb-1">
                         {act.name}
                       </div>
-                      <div className="flex gap-2 text-[10px] text-text-muted">
+                      <div className="flex gap-2 text-[11px] text-text-muted">
                         <span className={
                           act.value >= 70 ? 'text-accent-green' : act.value >= 50 ? 'text-accent-amber' : 'text-text-secondary'
                         }>
@@ -123,12 +123,12 @@ export default function DataView() {
 
             {/* Ungrouped */}
             {ungrouped.length > 0 && (
-              <div className="bg-[#1a1510] rounded-lg border border-accent-amber/25 p-4">
+              <div className="bg-[#1a1510] rounded-xl border border-accent-amber/25 p-4">
                 <div className="flex items-center gap-2.5 mb-3">
                   <span className="text-sm font-bold text-accent-amber font-display">
                     {'\u26a0\ufe0f'} No Similarity Group
                   </span>
-                  <span className="text-[10px] text-text-secondary">
+                  <span className="text-[11px] text-text-secondary">
                     (No diminishing returns applied)
                   </span>
                 </div>
@@ -139,7 +139,7 @@ export default function DataView() {
                       <div className="text-xs font-semibold text-accent-amber mb-1">
                         {act.name}
                       </div>
-                      <div className="text-[10px] text-text-muted">
+                      <div className="text-[11px] text-text-muted">
                         Val: {act.value} {'\u2022'} {act.intensity}
                       </div>
                     </div>

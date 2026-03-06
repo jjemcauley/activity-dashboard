@@ -637,7 +637,7 @@ export default function Generator() {
       {/* --- Toolbar --- */}
       <div className="flex items-center flex-wrap gap-4 px-7 py-3.5 bg-base-800 border-b border-base-500">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-base-100 uppercase tracking-wider font-semibold">
+          <span className="text-[11px] text-base-100 uppercase tracking-wider font-semibold">
             Groups
           </span>
           <input
@@ -655,7 +655,7 @@ export default function Generator() {
         <div className="w-px h-6 bg-base-500" />
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-base-100 uppercase tracking-wider font-semibold">
+          <span className="text-[11px] text-base-100 uppercase tracking-wider font-semibold">
             Rotations
           </span>
           <input
@@ -711,28 +711,28 @@ export default function Generator() {
       {stats && (
         <div className="px-7 py-5">
           <div className="flex gap-3 flex-wrap mb-4">
-            <div className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]">
-              <div className="text-[10px] text-base-100 mb-0.5">Avg Value</div>
+            <div className="bg-base-700 rounded-xl border border-base-500 px-4 py-3 min-w-[110px]">
+              <div className="text-[11px] text-base-100 mb-0.5">Avg Value</div>
               <div className="text-lg font-bold font-mono text-accent-green">
                 {stats.avgValue}
               </div>
             </div>
-            <div className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]">
-              <div className="text-[10px] text-base-100 mb-0.5">Avg Walk</div>
+            <div className="bg-base-700 rounded-xl border border-base-500 px-4 py-3 min-w-[110px]">
+              <div className="text-[11px] text-base-100 mb-0.5">Avg Walk</div>
               <div className="text-lg font-bold font-mono text-warning">
                 {stats.avgDist}m
               </div>
             </div>
-            <div className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]">
-              <div className="text-[10px] text-base-100 mb-0.5">Adjacencies</div>
+            <div className="bg-base-700 rounded-xl border border-base-500 px-4 py-3 min-w-[110px]">
+              <div className="text-[11px] text-base-100 mb-0.5">Adjacencies</div>
               <div className={`text-lg font-bold font-mono ${
                 stats.totalAdjacencies === 0 ? "text-accent-green" : "text-error-light"
               }`}>
                 {stats.totalAdjacencies}
               </div>
             </div>
-            <div className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]">
-              <div className="text-[10px] text-base-100 mb-0.5">Latin Square</div>
+            <div className="bg-base-700 rounded-xl border border-base-500 px-4 py-3 min-w-[110px]">
+              <div className="text-[11px] text-base-100 mb-0.5">Latin Square</div>
               <div className={`text-sm font-bold font-mono ${
                 validation?.valid ? "text-accent-green" : "text-error-light"
               }`}>
@@ -743,17 +743,17 @@ export default function Generator() {
 
           {/* Validation issues */}
           {validation && !validation.valid && (
-            <div className="bg-[#1c1117] border border-[#4c1d29] rounded-lg px-3.5 py-2.5 mb-4">
+            <div className="bg-[#1c1117] border border-[#4c1d29] rounded-xl px-3.5 py-2.5 mb-4">
               <div className="text-[11px] text-error-light font-semibold mb-1.5">
                 Latin Square Issues
               </div>
               {validation.issues.slice(0, 8).map((issue, i) => (
-                <div key={i} className="text-[10px] text-[#fca5a5] mb-0.5">
+                <div key={i} className="text-[11px] text-[#fca5a5] mb-0.5">
                   · {issue}
                 </div>
               ))}
               {validation.issues.length > 8 && (
-                <div className="text-[10px] text-base-100 mt-1">
+                <div className="text-[11px] text-base-100 mt-1">
                   ...and {validation.issues.length - 8} more
                 </div>
               )}
@@ -769,7 +769,7 @@ export default function Generator() {
             {/* Day headers */}
             <thead>
               <tr>
-                <th className="w-[52px] px-2 py-1 text-[9px] text-base-200 text-left sticky left-0 bg-base-900 z-[2]">
+                <th className="w-[52px] px-2 py-1 text-[11px] text-base-200 text-left sticky left-0 bg-base-900 z-[2]">
                   Group
                 </th>
                 {daySlices.map((day, di) => (
@@ -792,7 +792,7 @@ export default function Generator() {
                 {timeSlots.map((slot, si) => (
                   <th
                     key={si}
-                    className={`px-0.5 py-0.5 text-[8px] text-base-200 font-medium text-center ${
+                    className={`px-2 py-1 text-[11px] text-base-200 font-medium text-center ${
                       dayBounds.has(si) ? "border-l-2 border-base-500" : ""
                     }`}
                   >
@@ -813,11 +813,11 @@ export default function Generator() {
                       return (
                         <td
                           key={si}
-                          className={`p-0.5 ${
+                          className={`p-1 ${
                             dayBounds.has(si) ? "border-l-2 border-base-500" : ""
                           }`}
                         >
-                          <div className="bg-base-700 rounded h-[52px] flex items-center justify-center text-[10px] text-base-300">
+                          <div className="bg-base-700 rounded h-[52px] flex items-center justify-center text-[11px] text-base-300">
                             —
                           </div>
                         </td>
@@ -843,7 +843,7 @@ export default function Generator() {
                     return (
                       <td
                         key={si}
-                        className={`p-0.5 ${
+                        className={`p-1 ${
                           dayBounds.has(si) ? "border-l-2 border-base-500" : ""
                         }`}
                       >
@@ -868,14 +868,14 @@ export default function Generator() {
 
                           {/* Boost indicator */}
                           {isBoosted && (
-                            <div className="absolute top-px left-[3px] text-[7px] text-accent-purple opacity-70">
+                            <div className="absolute top-px left-[3px] text-[11px] text-accent-purple opacity-70">
                               ★
                             </div>
                           )}
 
                           {/* Activity name */}
                           <div
-                            className="text-[10px] font-semibold leading-tight mt-0.5 text-[var(--cell-text)]"
+                            className="text-[11px] font-semibold leading-tight mt-0.5 text-[var(--cell-text)]"
                             style={{ '--cell-text': colors.text }}
                           >
                             {shortName(activity.name)}
@@ -883,11 +883,11 @@ export default function Generator() {
 
                           {/* Footer: zone + value */}
                           <div className="flex justify-between items-end">
-                            <span className="text-[7px] text-base-200 max-w-[40px] overflow-hidden text-ellipsis whitespace-nowrap">
+                            <span className="text-[11px] text-base-200 max-w-[40px] overflow-hidden text-ellipsis whitespace-nowrap">
                               {activity.zone}
                             </span>
                             <span
-                              className="text-[9px] font-bold font-mono bg-black/25 rounded-[3px] px-1 py-px text-[var(--cell-text)]"
+                              className="text-[11px] font-bold font-mono bg-black/25 rounded-[3px] px-1 py-px text-[var(--cell-text)]"
                               style={{ '--cell-text': colors.text }}
                             >
                               {activity.value}
@@ -914,22 +914,22 @@ export default function Generator() {
             {stats.groupStats.map((gs, gi) => (
               <div
                 key={gi}
-                className="bg-base-700 rounded-lg border border-base-500 px-4 py-3 min-w-[110px]"
+                className="bg-base-700 rounded-xl border border-base-500 px-4 py-3 min-w-[110px]"
               >
                 <div className="text-xs font-bold text-accent-purple mb-1.5 font-mono">
                   A{gi + 1}
                 </div>
-                <div className="text-[10px] text-base-100 mb-0.5">
+                <div className="text-[11px] text-base-100 mb-0.5">
                   Value: <span className="text-accent-green font-semibold">
                     {gs.value}
                   </span>
                 </div>
-                <div className="text-[10px] text-base-100 mb-0.5">
+                <div className="text-[11px] text-base-100 mb-0.5">
                   Walk: <span className="text-warning font-semibold">
                     {gs.dist}m
                   </span>
                 </div>
-                <div className="text-[10px] text-base-100 mb-0.5">
+                <div className="text-[11px] text-base-100 mb-0.5">
                   Long walks: <span className={`font-semibold ${
                     gs.longWalks > 2 ? "text-error-light" : "text-base-100"
                   }`}>
@@ -937,7 +937,7 @@ export default function Generator() {
                   </span>
                 </div>
                 {gs.adjacencies > 0 && (
-                  <div className="text-[10px] text-base-100 mb-0.5">
+                  <div className="text-[11px] text-base-100 mb-0.5">
                     Adj. violations: <span className="text-error-light font-semibold">
                       {gs.adjacencies}
                     </span>

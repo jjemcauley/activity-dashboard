@@ -8,10 +8,10 @@
 // ── Intensity colors (badge backgrounds + text) ──
 
 export const INTENSITY_COLORS = {
-  Minimal: '#a8d5ba',
-  Mild: '#f9e79f',
-  Moderate: '#f5b041',
-  Intense: '#e74c3c',
+  Minimal: '#8dbfa3',
+  Mild: '#e0cd80',
+  Moderate: '#d9982e',
+  Intense: '#c94040',
 };
 
 export const INTENSITY_TEXT = {
@@ -115,19 +115,19 @@ export function getSimColor(group) {
 // ── Distance badge colors ──
 
 export function getDistanceBadgeColors(dist) {
-  if (dist > 600) return { color: '#dc2626', bg: '#fef2f2' };
-  if (dist > 400) return { color: '#d97706', bg: '#fffbeb' };
-  if (dist > 200) return { color: '#6b7280', bg: '#f3f4f6' };
-  return { color: '#059669', bg: '#ecfdf5' };
+  if (dist > 600) return { color: '#e07070', bg: '#dc262618' };
+  if (dist > 400) return { color: '#e0b040', bg: '#d9770618' };
+  if (dist > 200) return { color: '#9ca3af', bg: '#6b728018' };
+  return { color: '#4cc08a', bg: '#05966918' };
 }
 
 // ── Value gradient helpers ──
 
 export function valueColor(v) {
   const t = (v ?? 0) / 100;
-  return `rgb(${Math.round(220 - t * 180)},${Math.round(230 - t * 80)},${Math.round(220 - t * 150)})`;
+  return `rgb(${Math.round(200 - t * 150)},${Math.round(210 - t * 60)},${Math.round(200 - t * 130)})`;
 }
 
 export function valueTextColor(v) {
-  return (v ?? 0) > 70 ? '#fff' : '#1a2a1a';
+  return (v ?? 0) > 60 ? '#f0f0f0' : '#d0d0d0';
 }

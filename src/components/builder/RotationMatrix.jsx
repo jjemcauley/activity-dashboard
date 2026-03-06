@@ -17,19 +17,19 @@ export default function RotationMatrix({ rotLabel, rotColor, groups, numGroups, 
         <div className="flex items-center gap-3">
           <div className={`text-xs transition-transform duration-200 text-[var(--rot-color)] ${collapsed ? '-rotate-90' : 'rotate-0'}`} style={{ '--rot-color': rotColor }}>{'\u25BC'}</div>
           <div className="text-lg font-[800] font-display text-[var(--rot-color)]" style={{ '--rot-color': rotColor }}>Rotation {rotLabel}</div>
-          <div className="text-[10px] text-text-secondary font-mono">{numGroups} groups x {numCols} slots</div>
+          <div className="text-[11px] text-text-secondary font-mono">{numGroups} groups x {numCols} slots</div>
         </div>
         <div className="flex items-center gap-3.5">
           <div className="flex items-center gap-2">
             <div className="w-20 h-1.5 rounded-[3px] bg-base-800 overflow-hidden">
               <div className="h-full rounded-[3px] transition-[width] duration-300 bg-[var(--fill-color)] w-[var(--fill-pct)]" style={{ '--fill-color': fillPct === 100 ? '#34d399' : rotColor, '--fill-pct': `${fillPct}%` }} />
             </div>
-            <span className={`text-[10px] font-mono ${fillPct === 100 ? 'text-[#34d399]' : 'text-[#888]'}`}>{fillPct}%</span>
+            <span className={`text-[11px] font-mono ${fillPct === 100 ? 'text-[#34d399]' : 'text-[#888]'}`}>{fillPct}%</span>
           </div>
-          {errCount > 0 && <span className="text-[10px] font-bold text-error px-2 py-0.5 rounded bg-[#dc262620]">{errCount} err</span>}
-          {wrnCount > 0 && <span className="text-[10px] font-bold text-warning px-2 py-0.5 rounded bg-[#f59e0b20]">{wrnCount} wrn</span>}
+          {errCount > 0 && <span className="text-[11px] font-bold text-error px-2 py-0.5 rounded bg-[#dc262620]">{errCount} err</span>}
+          {wrnCount > 0 && <span className="text-[11px] font-bold text-warning px-2 py-0.5 rounded bg-[#f59e0b20]">{wrnCount} wrn</span>}
           {onSave && fillPct === 100 && (
-            <button onClick={e => { e.stopPropagation(); onSave(); }} className="px-3 py-1 rounded border border-success-light text-success-light text-[10px] font-bold cursor-pointer bg-[#34d39920]">
+            <button onClick={e => { e.stopPropagation(); onSave(); }} className="px-3 py-1 rounded border border-success-light text-success-light text-[11px] font-bold cursor-pointer bg-[#34d39920]">
               Save to Dashboard
             </button>
           )}
@@ -48,8 +48,8 @@ export default function RotationMatrix({ rotLabel, rotColor, groups, numGroups, 
               <th className="min-w-[80px]" />
             </tr>
             <tr>
-              <th className="text-[9px] text-text-faint font-semibold text-center px-1.5 py-1">GRP</th>
-              {timeSlots.map((ts, ci) => { const isNewDay = ci > 0 && daySlices.some(d => d.start === ci); return <React.Fragment key={ci}>{isNewDay && <th className="w-2.5" />}<th className="text-[9px] text-text-faint font-medium text-center px-1 py-1 font-mono whitespace-nowrap">{ts.time}</th></React.Fragment>; })}
+              <th className="text-[11px] text-text-faint font-semibold text-center px-1.5 py-1.5">GRP</th>
+              {timeSlots.map((ts, ci) => { const isNewDay = ci > 0 && daySlices.some(d => d.start === ci); return <React.Fragment key={ci}>{isNewDay && <th className="w-2.5" />}<th className="text-[11px] text-text-faint font-medium text-center px-1.5 py-1.5 font-mono whitespace-nowrap">{ts.time}</th></React.Fragment>; })}
               <th />
             </tr>
           </thead>
@@ -69,10 +69,10 @@ export default function RotationMatrix({ rotLabel, rotColor, groups, numGroups, 
                   })}
                   <td className="px-1 align-middle">
                     {isFilled ? (
-                      <button onClick={() => onCompareRow(rotLabel, ri)} className="px-2.5 py-1.5 rounded-md text-[9px] font-bold cursor-pointer transition-all whitespace-nowrap flex items-center gap-1 border border-[#f9731650] bg-[linear-gradient(135deg,#f9731615,#f9731608)] text-accent-orange" title={`Compare Group ${ri+1}`}>
+                      <button onClick={() => onCompareRow(rotLabel, ri)} className="px-2.5 py-1.5 rounded-md text-[11px] font-bold cursor-pointer transition-all whitespace-nowrap flex items-center gap-1 border border-[#f9731650] bg-[linear-gradient(135deg,#f9731615,#f9731608)] text-accent-orange" title={`Compare Group ${ri+1}`}>
                         <span className="text-xs leading-none">&#8660;</span> Compare
                       </button>
-                    ) : <div className="text-[9px] text-base-300 text-center py-1.5 px-1 whitespace-nowrap">Fill row</div>}
+                    ) : <div className="text-[11px] text-base-300 text-center py-1.5 px-1 whitespace-nowrap">Fill row</div>}
                   </td>
                 </tr>
               );
