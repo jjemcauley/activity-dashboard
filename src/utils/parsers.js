@@ -35,7 +35,7 @@ export function parseMetadata(csvText) {
   const iName = col(/activity\s*name/i);
   const iUid = col(/uid/i);
   const iSeason = col(/season/i);
-  const iLocation = col(/general\s*location|activity.*location/i);
+  const iLocation = col(/general\s*location|activity.*location|^zone$/i);
   const iIO = col(/indoor.*outdoor|outdoor.*indoor/i);
   const iIntensity = col(/intensity/i);
   const iValue = col(/customer\s*value|value\s*rating/i);
