@@ -139,6 +139,16 @@ export default function App() {
     return flags;
   }, [savedEdits]);
 
+  // Context value for child components (stable reference via useMemo)
+  const dashCtx = useMemo(() => dashData ? ({
+    registry: dashData.registry,
+    distMatrix: dashData.distMatrix,
+    timeSlots: dashData.timeSlots,
+    daySlices: dashData.daySlices,
+    startLocations: dashData.startLocations,
+    similarities: dashData.similarities,
+  }) : null, [dashData]);
+
   // --- Loading ---
   if (mode === 'loading') {
     return (
@@ -160,16 +170,6 @@ export default function App() {
       />
     );
   }
-
-  // Context value for child components (stable reference via useMemo)
-  const dashCtx = useMemo(() => dashData ? ({
-    registry: dashData.registry,
-    distMatrix: dashData.distMatrix,
-    timeSlots: dashData.timeSlots,
-    daySlices: dashData.daySlices,
-    startLocations: dashData.startLocations,
-    similarities: dashData.similarities,
-  }) : null, [dashData]);
 
   // --- Main app ---
   if (mode === 'app' && dashData) {

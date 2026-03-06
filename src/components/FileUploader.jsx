@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { storage } from '../utils/storage';
 
 const FILE_TYPES = [
   {
@@ -115,8 +116,23 @@ function DropZone({ fileType, file, onFile }) {
   );
 }
 
+function loadExistingFiles() {
+  const result = {};
+  for (const key of ['metadata', 'distances', 'schedule', 'similarities']) {
+    const text = storage.loadCSV(key);
+    if (text) {
+      result[key] = { name: `${key}.csv (saved)`, size: new Blob([text]).size, text };
+    } else {
+      result[key] = null;
+    }
+  }
+  return result;
+}
+
 export default function FileUploader({ onFilesReady, hasExisting }) {
-  const [files, setFiles] = useState({ metadata: null, distances: null, schedule: null, similarities: null });
+  const [files, setFiles] = useState(() =>
+    hasExisting ? loadExistingFiles() : { metadata: null, distances: null, schedule: null, similarities: null }
+  );
   const [error, setError] = useState(null);
 
   const handleFile = (key) => async (file) => {
@@ -215,7 +231,7 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
                 : 'bg-base-400 text-text-faint cursor-not-allowed'
             }`}
           >
-            Load Dashboard
+            {hasExisting ? 'Re-load Dashboard' : 'Load Dashboard'}
           </button>
 
           {hasExisting && (
@@ -223,7 +239,7 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
               onClick={() => onFilesReady(null)}
               className="px-7 py-3 rounded-lg border border-base-400 bg-transparent text-text-secondary text-[13px] font-medium cursor-pointer transition-all duration-200"
             >
-              Use Previously Loaded Data
+              Back to Dashboard
             </button>
           )}
         </div>
