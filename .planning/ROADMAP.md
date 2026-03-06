@@ -41,9 +41,10 @@ Plans:
   2. For N>1, each rotation receives a distinct, non-overlapping activity pool partitioned to equalize total value across rotations
   3. Only activities whose season metadata matches the selected season appear in generated schedules
   4. The greedy slot-by-slot algorithm fills each slot with the highest-value remaining valid activity
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
+- [ ] 02-00-PLAN.md — Install vitest, create unit test scaffold for filterBySeason and partitionActivities (Wave 0 / Nyquist compliance)
 - [ ] 02-01-PLAN.md — Add filterBySeason and partitionActivities pure functions; add season field to activities useMemo; add availableSeasons useMemo
 - [ ] 02-02-PLAN.md — Wire multi-rotation orchestrator, refactor state shape, add season selector UI, add N-count tabs and rotation sub-tabs
 
@@ -77,6 +78,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 1/1 | Complete   | 2026-03-06 |
-| 2. Generation Engine | 0/2 | Planned | - |
+| 2. Generation Engine | 0/3 | Planned | - |
 | 3. Constraint Scoring | 0/TBD | Not started | - |
 | 4. UI and Reporting | 0/TBD | Not started | - |
