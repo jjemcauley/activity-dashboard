@@ -610,6 +610,21 @@ export default function Generator() {
     return acts;
   }, [registry, similarities]);
 
+  // Derive available seasons dynamically from the loaded activity pool.
+  // Splits multi-season values ("Spring/Fall") into individual tokens.
+  // "All" is excluded — it's a wildcard, not a selectable season.
+  const availableSeasons = useMemo(() => {
+    const set = new Set();
+    for (const act of activities) {
+      const raw = act.season || "";
+      raw.split("/").forEach(s => {
+        const t = s.trim();
+        if (t && t.toLowerCase() !== "all") set.add(t);
+      });
+    }
+    return [...set].sort();
+  }, [activities]);
+
   const effectiveSlots = timeSlots.length;
   const effectiveGroups = Math.min(numGroups, activities.length, effectiveSlots);
 
