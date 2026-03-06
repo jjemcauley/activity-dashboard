@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Generation Core
 
-- [ ] **GEN-01**: Generator filters activity pool by user-selected season using metadata "Season" column (supports "Season", "Season/Season", "All" formats)
+- [x] **GEN-01**: Generator filters activity pool by user-selected season using metadata "Season" column (supports "Season", "Season/Season", "All" formats)
 - [ ] **GEN-02**: Generator produces complete Latin square schedules for N=1 through N=max rotation counts in a single run
-- [ ] **GEN-03**: For N>1 rotations, generator partitions activities across rotations optimizing for equal total value per rotation
+- [x] **GEN-03**: For N>1 rotations, generator partitions activities across rotations optimizing for equal total value per rotation
 - [ ] **GEN-04**: Each rotation is a valid Latin square — every activity appears exactly once per row and once per column
 - [ ] **GEN-05**: Generator maximizes total activity value across the schedule using greedy slot-by-slot scoring
 
@@ -58,9 +58,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GEN-01 | Phase 2 | Pending |
+| GEN-01 | Phase 2 | Complete |
 | GEN-02 | Phase 2 | Pending |
-| GEN-03 | Phase 2 | Pending |
+| GEN-03 | Phase 2 | Complete |
 | GEN-04 | Phase 2 | Pending |
 | GEN-05 | Phase 2 | Pending |
 | CON-01 | Phase 3 | Pending |
