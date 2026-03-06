@@ -115,8 +115,9 @@ function ComparisonDayCard({ dayName, oldStats, newStats, color, slotCount }) {
 }
 
 /* Comparison View */
-export default function ComparisonView({ newGroup, oldGroup, oldLabel, newLabel, timeSlots, daySlices, registry, distMatrix, startLocation, startLocations, onClose, onChangeOldSource, existingRotations, selectedOldRot, selectedOldGroup }) {
+export default function ComparisonView({ newGroup, oldGroup, oldLabel, newLabel, timeSlots, daySlices, registry, distMatrix, startLocation, onClose, onChangeOldSource, existingRotations, selectedOldRot, selectedOldGroup }) {
   const [colorMode, setColorMode] = useState('value');
+  const startOptions = useMemo(() => Object.keys(distMatrix), [distMatrix]);
   const [localStart, setLocalStart] = useState(startLocation);
   const oldO = useMemo(() => computeOverallStats(oldGroup, daySlices, registry, distMatrix, localStart), [oldGroup, daySlices, registry, distMatrix, localStart]);
   const newO = useMemo(() => computeOverallStats(newGroup, daySlices, registry, distMatrix, localStart), [newGroup, daySlices, registry, distMatrix, localStart]);
@@ -145,7 +146,7 @@ export default function ComparisonView({ newGroup, oldGroup, oldLabel, newLabel,
           <div className="w-px h-6 bg-base-400" />
           <select value={localStart || ''} onChange={e => setLocalStart(e.target.value || null)} className="px-2 py-1 rounded text-[11px] border border-base-400 bg-base-800 cursor-pointer font-mono max-w-[180px] text-accent-orange">
             <option value="">No start</option>
-            {(startLocations||[]).map(s => <option key={s} value={s}>{s}</option>)}
+            {startOptions.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </div>

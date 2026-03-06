@@ -21,13 +21,13 @@ function TableComparisonRow({ label, oldVal, newVal, unit, higherIsBetter, forma
   );
 }
 
-export default function FullTableComparison({ groupsA, groupsB, statsA, statsB, rotations, registry, distMatrix, daySlices, timeSlots, startLocations }) {
+export default function FullTableComparison({ groupsA, groupsB, statsA, statsB, rotations, registry, distMatrix, daySlices, timeSlots }) {
   const aFull = statsA.pct === 100;
   const bFull = statsB.pct === 100;
   if (!aFull && !bFull) return null;
   if (!rotations?.length) return null;
 
-  const startLoc = startLocations?.[0] || null;
+  const startLoc = null;
 
   const dashStats = rotations.map(rot => ({
     name: rot.name,

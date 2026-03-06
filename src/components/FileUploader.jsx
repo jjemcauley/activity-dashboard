@@ -5,17 +5,9 @@ const FILE_TYPES = [
   {
     key: 'metadata',
     label: 'Activity Metadata',
-    description: 'Activity names, customer value, intensity, location zones, staff requirements',
+    description: 'Activity names, GPS locations, customer value, intensity, location zones, staff requirements',
     hint: 'The CDS / data sheet',
     icon: '\u{1F4CB}',
-    required: true,
-  },
-  {
-    key: 'distances',
-    label: 'Distance Matrix',
-    description: 'Pairwise walking distances between activity locations (meters)',
-    hint: 'The distances sheet',
-    icon: '\u{1F4CF}',
     required: true,
   },
   {
@@ -25,14 +17,6 @@ const FILE_TYPES = [
     hint: 'The 1-hour activity blocks',
     icon: '\u{1F4C5}',
     required: true,
-  },
-  {
-    key: 'similarities',
-    label: 'Activity Similarities',
-    description: 'Activity groupings for matrix generation constraints',
-    hint: 'Optional \u2014 for auto-generation',
-    icon: '\u{1F517}',
-    required: false,
   },
 ];
 
@@ -118,7 +102,7 @@ function DropZone({ fileType, file, onFile }) {
 
 function loadExistingFiles() {
   const result = {};
-  for (const key of ['metadata', 'distances', 'schedule', 'similarities']) {
+  for (const key of ['metadata', 'schedule']) {
     const text = storage.loadCSV(key);
     if (text) {
       result[key] = { name: `${key}.csv (saved)`, size: new Blob([text]).size, text };
@@ -131,7 +115,7 @@ function loadExistingFiles() {
 
 export default function FileUploader({ onFilesReady, hasExisting }) {
   const [files, setFiles] = useState(() =>
-    hasExisting ? loadExistingFiles() : { metadata: null, distances: null, schedule: null, similarities: null }
+    hasExisting ? loadExistingFiles() : { metadata: null, schedule: null }
   );
   const [error, setError] = useState(null);
 
@@ -141,12 +125,8 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
     setFiles(prev => ({ ...prev, [key]: { name: file.name, size: file.size, text } }));
   };
 
-  const clearFile = (key) => {
-    setFiles(prev => ({ ...prev, [key]: null }));
-  };
-
   // Required files check
-  const requiredReady = files.metadata && files.distances && files.schedule;
+  const requiredReady = files.metadata && files.schedule;
 
   const handleLoad = () => {
     if (!requiredReady) return;
@@ -154,9 +134,7 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
     try {
       onFilesReady({
         metadata: files.metadata.text,
-        distances: files.distances.text,
         schedule: files.schedule.text,
-        similarities: files.similarities?.text || null,
       });
     } catch (e) {
       setError(e.message);
@@ -193,32 +171,6 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
           </div>
         </div>
 
-        {/* Optional files section */}
-        <div className="mb-8">
-          <div className="text-[12px] text-text-muted uppercase tracking-[1px] mb-3 pl-1">
-            Optional Files
-          </div>
-          <div className="flex gap-5 flex-wrap">
-            {FILE_TYPES.filter(ft => !ft.required).map(ft => (
-              <div key={ft.key} className="relative flex-[1_1_280px] max-w-[320px]">
-                <DropZone
-                  fileType={ft}
-                  file={files[ft.key]}
-                  onFile={handleFile(ft.key)}
-                />
-                {files[ft.key] && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); clearFile(ft.key); }}
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full border border-[#dc262640] bg-[#1a1010] text-error text-sm cursor-pointer flex items-center justify-center transition-all duration-150"
-                    title="Remove file"
-                  >
-                    &times;
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Actions */}
         <div className="flex justify-center gap-4 flex-wrap">
@@ -249,13 +201,11 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
           {requiredReady ? (
             <span className="text-success">
               &#10003; All required files loaded
-              {files.similarities && <span className="text-accent-cyan"> + similarities data</span>}
             </span>
           ) : (
             <span>
               {[
                 !files.metadata && 'metadata',
-                !files.distances && 'distances',
                 !files.schedule && 'schedule',
               ].filter(Boolean).join(', ')} still needed
             </span>
@@ -279,10 +229,6 @@ export default function FileUploader({ onFilesReady, hasExisting }) {
             apostrophe variants, typos). The dashboard will automatically match names
             across files using fuzzy matching and flag any discrepancies for review.
             Data is saved in your browser and persists across reloads — no server needed.
-          </div>
-          <div className="text-[12px] text-text-muted leading-[1.6] mt-3 pt-3 border-t border-base-500">
-            <strong className="text-accent-cyan">Similarities file:</strong> Used for the matrix auto-generation feature.
-            Should contain activity names and their similarity groupings (e.g., "High Ropes" activities grouped together).
           </div>
         </div>
       </div>

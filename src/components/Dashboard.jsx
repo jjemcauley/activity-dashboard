@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import {
-  INTENSITY_COLORS, INTENSITY_TEXT, LOCATION_COLORS, DAY_COLORS,
-  valueColor, valueTextColor,
+  INTENSITY_COLORS, INTENSITY_TEXT, UNIQUE_COLORS, UNIQUE_TEXT,
+  LOCATION_COLORS, DAY_COLORS, valueColor, valueTextColor,
 } from '../constants/colors.js';
 import { lookupMeta } from '../utils/parsers.js';
 import { computeDayStats, escapeCSV } from '../utils/scheduleStats.js';
@@ -64,19 +64,14 @@ function downloadCSV(content, filename) {
 // -----------------------------------------
 
 export default function Dashboard({ rotations, editFlags, useEdited, onToggleEdited, onClearEdit }) {
-  const { registry, distMatrix, timeSlots, daySlices, startLocations } = useDashboard();
+  const { registry, distMatrix, timeSlots, daySlices, startLocations, foodLocations } = useDashboard();
   const [rotIdx, setRotIdx] = useState(0);
   const [colorMode, setColorMode] = useState('value');
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
   const [focusGroup, setFocusGroup] = useState('all');
   const [showWarnings, setShowWarnings] = useState(false);
-  const [startLocation, setStartLocation] = useState(startLocations?.[0] || null);
-
-  const allStartOptions = useMemo(() => {
-    const distKeys = Object.keys(distMatrix).filter(k => !/^\(start\)/i.test(k));
-    return [...startLocations, ...distKeys];
-  }, [distMatrix, startLocations]);
+  const [startLocation, setStartLocation] = useState(null);
 
   const currentRot = rotations[rotIdx] || rotations[0];
   const schedule = currentRot?.groups || [];
@@ -115,6 +110,7 @@ export default function Dashboard({ rotations, editFlags, useEdited, onToggleEdi
     if (!meta) return { '--cell-bg': '#333', '--cell-color': '#e74c3c' };
     if (colorMode === 'value') return { '--cell-bg': valueColor(meta.value), '--cell-color': valueTextColor(meta.value) };
     if (colorMode === 'intensity') return { '--cell-bg': INTENSITY_COLORS[meta.intensity] || '#333', '--cell-color': INTENSITY_TEXT[meta.intensity] || '#fff' };
+    if (colorMode === 'unique') return { '--cell-bg': UNIQUE_COLORS[meta.unique] || '#555', '--cell-color': UNIQUE_TEXT[meta.unique] || '#fff' };
     if (colorMode === 'io') return { '--cell-bg': meta.io === 'Indoor' ? '#6c3483' : '#1e8449', '--cell-color': '#fff' };
     if (colorMode === 'location') return { '--cell-bg': LOCATION_COLORS[meta.location] || '#555', '--cell-color': '#fff' };
     return { '--cell-bg': '#333', '--cell-color': '#ccc' };
@@ -138,7 +134,7 @@ export default function Dashboard({ rotations, editFlags, useEdited, onToggleEdi
         focusGroup={focusGroup} setFocusGroup={setFocusGroup} numGroups={numGroups}
         colorMode={colorMode} setColorMode={setColorMode}
         startLocation={startLocation} setStartLocation={setStartLocation}
-        startLocations={startLocations} allStartOptions={allStartOptions}
+        startLocations={startLocations}
         showWarnings={showWarnings} setShowWarnings={setShowWarnings}
         warningCount={registry.warnings.length}
         locationZones={locationZones}
@@ -164,7 +160,8 @@ export default function Dashboard({ rotations, editFlags, useEdited, onToggleEdi
         displayGroups={displayGroups} isSingleGroup={isSingleGroup}
         daySlices={daySlices} dayColors={dayColors} dayBoundaries={dayBoundaries}
         timeSlots={timeSlots} registry={registry} distMatrix={distMatrix}
-        startLocation={startLocation} colorMode={colorMode} getCellStyle={getCellStyle}
+        startLocation={startLocation} startLocations={startLocations} foodLocations={foodLocations}
+        colorMode={colorMode} getCellStyle={getCellStyle}
         hoveredCell={hoveredCell} setHoveredCell={setHoveredCell}
         setSelectedActivity={setSelectedActivity} setFocusGroup={setFocusGroup}
       />

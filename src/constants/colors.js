@@ -28,6 +28,20 @@ export const INTENSITY_BADGE = {
   Minimal:  { bg: '#6b728020', color: '#9ca3af', label: 'MIN' },
 };
 
+// ── Unique colors (badge backgrounds + text) ──
+
+export const UNIQUE_COLORS = {
+  Yes: '#2e86de',
+  Mixed: '#d9982e',
+  No: '#7f8c8d',
+};
+
+export const UNIQUE_TEXT = {
+  Yes: '#fff',
+  Mixed: '#fff',
+  No: '#fff',
+};
+
 // ── Location colors ──
 
 export const LOCATION_COLORS = {
@@ -86,8 +100,8 @@ export const VALUE_COLORS = [
   { min: 90, bg: '#064e3b', text: '#6ee7b7' },
   { min: 70, bg: '#1e3a2f', text: '#86efac' },
   { min: 50, bg: '#1a2332', text: '#93c5fd' },
-  { min: 30, bg: '#27242e', text: '#c4b5fd' },
-  { min: 0,  bg: '#1f1f24', text: '#a1a1aa' },
+  { min: 30, bg: '#27242e', text: '#d4c6ff' },
+  { min: 0,  bg: '#1f1f24', text: '#c8c8d0' },
 ];
 
 export function getCellColors(value) {
@@ -115,19 +129,26 @@ export function getSimColor(group) {
 // ── Distance badge colors ──
 
 export function getDistanceBadgeColors(dist) {
-  if (dist > 600) return { color: '#e07070', bg: '#dc262618' };
-  if (dist > 400) return { color: '#e0b040', bg: '#d9770618' };
-  if (dist > 200) return { color: '#9ca3af', bg: '#6b728018' };
-  return { color: '#4cc08a', bg: '#05966918' };
+  if (dist > 600) return { color: '#f87171', bg: '#dc262630' };
+  if (dist > 400) return { color: '#fbbf24', bg: '#d9770630' };
+  if (dist > 200) return { color: '#d1d5db', bg: '#6b728030' };
+  return { color: '#6ee7b7', bg: '#05966930' };
 }
 
 // ── Value gradient helpers ──
 
 export function valueColor(v) {
   const t = (v ?? 0) / 100;
-  return `rgb(${Math.round(200 - t * 150)},${Math.round(210 - t * 60)},${Math.round(200 - t * 130)})`;
+  // Dark backgrounds that vary by value — high value = richer green, low value = muted dark
+  const r = Math.round(25 + (1 - t) * 15);
+  const g = Math.round(35 + t * 40);
+  const b = Math.round(30 + (1 - t) * 10);
+  return `rgb(${r},${g},${b})`;
 }
 
 export function valueTextColor(v) {
-  return (v ?? 0) > 60 ? '#f0f0f0' : '#d0d0d0';
+  const t = (v ?? 0) / 100;
+  // High value = bright white, low value = still readable light gray
+  const base = 180 + Math.round(t * 65);
+  return `rgb(${base},${base + 5},${base})`;
 }

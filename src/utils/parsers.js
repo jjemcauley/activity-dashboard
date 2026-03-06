@@ -16,7 +16,7 @@ import { clean } from './stringMatch.js';
 export { clean, stripLocation, normalise, wordOverlap, levenshtein } from './stringMatch.js';
 export { buildRegistry } from './registry.js';
 export { lookupMeta, resolve, shortName } from './activityLookup.js';
-export { getDistance, getStartDistance } from './distanceLookup.js';
+export { getDistance, getStartDistance, getGPSDistanceToActivity, getLunchDistance } from './distanceLookup.js';
 
 // ─────────────────────────────────────────
 // 1. METADATA PARSER
@@ -43,6 +43,10 @@ export function parseMetadata(csvText) {
   const iStaff = col(/staff/i);
   const iScalable = col(/compress|scal/i);
   const iMaxGroups = col(/max.*activity.*group|max.*group/i);
+  const iGPS = col(/gps/i);
+  const iLocDesc = col(/location\s*desc/i);
+  const iUnique = col(/unique/i);
+  const iSimilarity = col(/similarity|grouping/i);
 
   if (iName === -1)
     throw new Error('Metadata CSV: could not find "Activity Name" column');
@@ -66,6 +70,10 @@ export function parseMetadata(csvText) {
       setup: iSetup >= 0 ? row[iSetup] : "",
       staff: iStaff >= 0 ? row[iStaff] : "",
       scalable: iScalable >= 0 ? row[iScalable] : "",
+      gps: iGPS >= 0 ? row[iGPS] : "",
+      locationDesc: iLocDesc >= 0 ? row[iLocDesc] : "",
+      unique: iUnique >= 0 ? row[iUnique] : "",
+      similarityGroup: iSimilarity >= 0 ? row[iSimilarity] : "",
     };
   }
 
@@ -203,7 +211,34 @@ export function parseSchedule(csvText) {
 }
 
 // ─────────────────────────────────────────
-// 4. SIMILARITIES PARSER
+// 3b. EXTRACT SIMILARITIES FROM METADATA
+// ─────────────────────────────────────────
+
+/**
+ * Build similarities data from parsed metadata activities (when similarity
+ * grouping column is present in the metadata CSV).
+ */
+export function extractSimilarities(metadataActivities) {
+  const groups = {};
+  const activityToGroup = {};
+  const ungrouped = [];
+
+  for (const [name, meta] of Object.entries(metadataActivities)) {
+    const group = meta.similarityGroup;
+    if (group) {
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(name);
+      activityToGroup[name] = group;
+    } else {
+      ungrouped.push(name);
+    }
+  }
+
+  return { groups, ungrouped, activityToGroup };
+}
+
+// ─────────────────────────────────────────
+// 4. SIMILARITIES PARSER (legacy separate file)
 // ─────────────────────────────────────────
 
 /**

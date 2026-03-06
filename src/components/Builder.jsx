@@ -11,7 +11,7 @@ import FullTableComparison from './builder/FullTableComparison.jsx';
 export default function Builder({ rotations, onSave, persistedState, onStateChange }) {
   const state = useBuilderState({ rotations, onSave, persistedState, onStateChange });
   const {
-    registry, distMatrix, timeSlots, daySlices, similarities, startLocations, numCols,
+    registry, distMatrix, timeSlots, daySlices, similarities, numCols,
     groupsA, groupsB, numGroupsA, numGroupsB,
     selectedActivity, setSelectedActivity, dropPreview, setDropPreview,
     paletteFilter, setPaletteFilter, paletteSort, setPaletteSort,
@@ -46,7 +46,7 @@ export default function Builder({ rotations, onSave, persistedState, onStateChan
       oldLabel={`Existing: Rotation ${rotations[compareOldRot]?.name||'?'} \u2014 Group ${compareOldGroup+1}`}
       newLabel={`Builder: Rotation ${compareView.rot} \u2014 Group ${compareView.row+1}`}
       timeSlots={timeSlots} daySlices={daySlices} registry={registry} distMatrix={distMatrix}
-      startLocation={startLocations?.[0]||null} startLocations={startLocations}
+      startLocation={null}
       onClose={() => setCompareView(null)} onChangeOldSource={(r,g) => { setCompareOldRot(r); setCompareOldGroup(g); }}
       existingRotations={rotations} selectedOldRot={compareOldRot} selectedOldGroup={compareOldGroup} />;
   }
@@ -95,7 +95,7 @@ export default function Builder({ rotations, onSave, persistedState, onStateChan
           statsA={statsA} statsB={statsB}
           rotations={rotations} registry={registry}
           distMatrix={distMatrix} daySlices={daySlices}
-          timeSlots={timeSlots} startLocations={startLocations}
+          timeSlots={timeSlots}
         />
       </div>
     </div>

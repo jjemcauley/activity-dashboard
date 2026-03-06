@@ -47,7 +47,6 @@ export const storage = {
   hasAllFiles() {
     return !!(
       this.loadCSV("metadata") &&
-      this.loadCSV("distances") &&
       this.loadCSV("schedule")
     );
   },
@@ -59,5 +58,23 @@ export const storage = {
       if (k?.startsWith(PREFIX)) toRemove.push(k);
     }
     toRemove.forEach((k) => localStorage.removeItem(k));
+  },
+
+  // ── Data page persistent locations ──
+
+  loadStartLocations() {
+    return this.loadJSON('data_startLocations') || [];
+  },
+
+  saveStartLocations(locations) {
+    this.saveJSON('data_startLocations', locations);
+  },
+
+  loadFoodLocations() {
+    return this.loadJSON('data_foodLocations') || [];
+  },
+
+  saveFoodLocations(locations) {
+    this.saveJSON('data_foodLocations', locations);
   },
 };

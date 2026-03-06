@@ -552,7 +552,7 @@ function validateLatinSquare(matrix) {
 // ═════════════════════════════════════════════════════════════════════
 
 export default function Generator() {
-  const { registry, distMatrix, timeSlots, daySlices, similarities, startLocations } = useDashboard();
+  const { registry, distMatrix, timeSlots, daySlices, similarities } = useDashboard();
   const [rotations, setRotations] = useState([]); // array of { matrix, stats, validation }
   const [generating, setGenerating] = useState(false);
   const [numGroups, setNumGroups] = useState(12);

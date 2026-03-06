@@ -9,9 +9,7 @@ import { TABS } from './constants/tabs';
 function loadFromStorage() {
   return processFiles(
     storage.loadCSV('metadata'),
-    storage.loadCSV('distances'),
     storage.loadCSV('schedule'),
-    storage.loadCSV('similarities'),
   );
 }
 
@@ -25,6 +23,10 @@ export default function App() {
 
   // Builder state - lifted here for persistence across tab changes
   const [builderState, setBuilderState] = useState(null);
+
+  // Data page locations — loaded from localStorage, synced when DataView changes them
+  const [startLocations, setStartLocations] = useState(() => storage.loadStartLocations());
+  const [foodLocations, setFoodLocations] = useState(() => storage.loadFoodLocations());
 
   // On mount: check localStorage for existing data
   useEffect(() => {
@@ -59,17 +61,9 @@ export default function App() {
 
     try {
       storage.saveCSV('metadata', files.metadata);
-      storage.saveCSV('distances', files.distances);
       storage.saveCSV('schedule', files.schedule);
 
-      // Save similarities if provided, or clear if not
-      if (files.similarities) {
-        storage.saveCSV('similarities', files.similarities);
-      } else {
-        storage.clearCSV('similarities');
-      }
-
-      const data = processFiles(files.metadata, files.distances, files.schedule, files.similarities);
+      const data = processFiles(files.metadata, files.schedule);
 
       storage.saveJSON('registry', {
         warnings: data.registry.warnings,
@@ -131,9 +125,12 @@ export default function App() {
     distMatrix: dashData.distMatrix,
     timeSlots: dashData.timeSlots,
     daySlices: dashData.daySlices,
-    startLocations: dashData.startLocations,
     similarities: dashData.similarities,
-  }) : null, [dashData]);
+    startLocations,
+    foodLocations,
+    setStartLocations,
+    setFoodLocations,
+  }) : null, [dashData, startLocations, foodLocations]);
 
   // Tab-specific props lookup
   const getTabProps = (id) => {
@@ -202,7 +199,7 @@ export default function App() {
                 <button
                   key={t.id}
                   onClick={() => !isDisabled && setTab(t.id)}
-                  title={isDisabled ? 'Upload similarities file to enable' : undefined}
+                  title={isDisabled ? 'No similarity grouping data available' : undefined}
                   className={`py-4 px-6 bg-transparent border-0 border-b-2 border-solid text-[14px] font-sans -mb-0.5 flex items-center gap-1.5 transition-all duration-150 ${
                     active ? 'font-bold' : 'font-medium'
                   } ${
