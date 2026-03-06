@@ -36,41 +36,6 @@ const CONFIG = {
 };
 
 // ═════════════════════════════════════════════════════════════════════
-// ZONE MAPPING — groups activities by physical area
-// Walk distances between zones are more reliable than individual
-// activity distances since the hill distorts straight-line meters.
-// ═════════════════════════════════════════════════════════════════════
-
-const ZONE_MAP = {
-  "Team Building Games (Music Hall)": "MainCamp",
-  "Photo Scavenger Hunt": "MainCamp",
-  "Arts n' Crafts": "MainCamp",
-  "Giant Swing": "MainCamp",
-  "Scooters & Longboards": "MainCamp",
-  "Archery Tag (Tennis Courts)": "MainCamp",
-  "Tennis": "MainCamp",
-  "Pickleball": "MainCamp",
-  "Broomball": "MainCamp",
-  "Indoor Climbing Wall (Field House)": "Fieldhouse",
-  "Hike the Trail (Front Gate Gazebo)": "FrontGate",
-  "Zipline": "HighRopes",
-  "High Ropes (Aerial Trust Dive)": "HighRopes",
-  "High Ropes (Drop Zone)": "HighRopes",
-  "High Ropes (Crate Stacking)": "HighRopes",
-  "High Ropes (Vertical Play Ground)": "HighRopes",
-  "High Ropes (Blocks)": "HighRopes",
-  "Low Ropes": "Gwitmock",
-  "Driving Range (Hill Top)": "HillTop",
-  "Disc Golf": "Gwitmock",
-  "Pump Track (The Park)": "Gwitmock",
-  "Archery (The Park)": "Gwitmock",
-};
-
-function getZone(activityName) {
-  return ZONE_MAP[activityName] || "Unknown";
-}
-
-// ═════════════════════════════════════════════════════════════════════
 // SCORING FUNCTIONS
 // ═════════════════════════════════════════════════════════════════════
 
@@ -572,7 +537,7 @@ export default function Generator() {
           io: entry.metadata.io || "",
           maxGroups: entry.metadata.maxGroups || 99,
           similarityGroup: similarities?.activityToGroup[name] || null,
-          zone: getZone(name),
+          zone: entry.metadata.location || "Unknown",
         });
       }
     }
