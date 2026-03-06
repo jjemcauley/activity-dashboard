@@ -723,18 +723,18 @@ export default function Generator() {
 
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-base-100 uppercase tracking-wider font-semibold">
-            Rotations
+            Season
           </span>
-          <input
-            type="number"
-            min={1}
-            max={4}
-            value={numRotations}
-            onChange={e => setNumRotations(
-              Math.max(1, Math.min(parseInt(e.target.value) || 1, 4))
-            )}
-            className="bg-base-500 border border-base-400 rounded-md text-text-primary px-2.5 py-1.5 text-[13px] font-mono w-14 text-center"
-          />
+          <select
+            value={selectedSeason}
+            onChange={e => setSelectedSeason(e.target.value)}
+            className="bg-base-500 border border-base-400 rounded-md text-text-primary px-2.5 py-1.5 text-[13px] w-32"
+          >
+            <option value="">All Seasons</option>
+            {availableSeasons.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
 
         <div className="w-px h-6 bg-base-500" />
@@ -755,22 +755,51 @@ export default function Generator() {
         </span>
       </div>
 
-      {/* --- Rotation Tabs --- */}
-      {rotations.length > 1 && (
-        <div className="flex gap-1.5 px-7 pt-2.5">
-          {rotations.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveRotation(i)}
-              className={`px-4 py-1.5 rounded-t-md text-xs font-semibold border border-b-0 cursor-pointer ${
-                activeRotation === i
-                  ? "border-accent-purple bg-[#1a1630] text-accent-purple"
-                  : "border-base-500 bg-transparent text-base-200"
-              }`}
-            >
-              Rotation {String.fromCharCode(65 + i)}
-            </button>
-          ))}
+      {/* --- Empty Season Warning --- */}
+      {emptySeasonWarning && (
+        <div className="mx-7 mt-3 px-4 py-2.5 bg-[#1c1117] border border-[#4c1d29] rounded-xl text-[12px] text-error-light">
+          No activities match the selected season. Try "All Seasons" or upload a metadata CSV with season data.
+        </div>
+      )}
+
+      {/* --- N-Count Tabs + Rotation Sub-Tabs --- */}
+      {results.length > 0 && (
+        <div className="px-7 pt-3">
+          {/* Outer tabs: 1 Rotation, 2 Rotations, 3 Rotations, ... */}
+          <div className="flex gap-1.5 flex-wrap mb-0">
+            {results.map(({ n }) => (
+              <button
+                key={n}
+                onClick={() => { setActiveN(n); setActiveRotation(0); }}
+                className={`px-4 py-1.5 rounded-t-md text-xs font-semibold border border-b-0 cursor-pointer ${
+                  activeN === n
+                    ? "border-accent-purple bg-[#1a1630] text-accent-purple"
+                    : "border-base-500 bg-transparent text-base-200"
+                }`}
+              >
+                {n} {n === 1 ? "Rotation" : "Rotations"}
+              </button>
+            ))}
+          </div>
+
+          {/* Inner sub-tabs: Rotation A, B, C within the selected N */}
+          {activeResultGroup && activeResultGroup.rotations.length > 1 && (
+            <div className="flex gap-1 pt-1 border-t border-accent-purple/20">
+              {activeResultGroup.rotations.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveRotation(i)}
+                  className={`px-3 py-1 rounded-b-md text-[11px] font-semibold cursor-pointer ${
+                    activeRotation === i
+                      ? "bg-accent-purple/20 text-accent-purple"
+                      : "text-base-200 hover:text-text-primary"
+                  }`}
+                >
+                  Rotation {String.fromCharCode(65 + i)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1040,15 +1069,14 @@ export default function Generator() {
       {!matrix && !generating && (
         <div className="flex flex-col items-center justify-center px-7 py-20 text-center">
           <div className="text-5xl mb-4 opacity-15">
-            ⬡
+            &#x2b21;
           </div>
           <div className="text-base text-base-200 mb-2">
             No schedule generated yet
           </div>
           <div className="text-xs text-base-300 max-w-[420px] leading-relaxed">
-            Configure the number of groups and rotations above, then click Generate.
-            The algorithm uses greedy row-by-row assignment with hard adjacency constraints
-            to prevent same-type activities (like High Ropes) from appearing back-to-back.
+            Select a season and configure the number of groups above, then click Generate.
+            The algorithm produces one Latin square per rotation count — pick the tab matching your group capacity.
           </div>
         </div>
       )}
@@ -1058,7 +1086,7 @@ export default function Generator() {
         <div className="flex flex-col items-center justify-center px-7 py-20">
           <div className="w-8 h-8 border-3 border-base-500 border-t-accent-purple rounded-full animate-spin" />
           <div className="text-[13px] text-base-100 mt-3.5">
-            Generating {numRotations} rotation{numRotations > 1 ? "s" : ""}...
+            Generating schedules for all rotation counts...
           </div>
         </div>
       )}
