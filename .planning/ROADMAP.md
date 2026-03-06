@@ -12,7 +12,7 @@ The generator rebuild replaces a hard-coded, single-rotation greedy algorithm wi
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Data Foundation** - Replace hard-coded zone map with data-driven zone lookup from uploaded metadata CSV
+- [x] **Phase 1: Data Foundation** - Replace hard-coded zone map with data-driven zone lookup from uploaded metadata CSV (completed 2026-03-06)
 - [ ] **Phase 2: Generation Engine** - Produce valid multi-rotation Latin square schedules with season filtering and value optimization
 - [ ] **Phase 3: Constraint Scoring** - Layer Gwitmock, similarity spacing, walk distance, and cross-rotation balance onto generation
 - [ ] **Phase 4: UI and Reporting** - Wire season selector, tabbed output, generate button with progress, and constraint violation display
@@ -72,7 +72,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 0/1 | Not started | - |
+| 1. Data Foundation | 1/1 | Complete   | 2026-03-06 |
 | 2. Generation Engine | 0/TBD | Not started | - |
 | 3. Constraint Scoring | 0/TBD | Not started | - |
 | 4. UI and Reporting | 0/TBD | Not started | - |

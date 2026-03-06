@@ -20,7 +20,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **CON-01**: Max 1 Gwitmock-zone activity per group (per row) to minimize hill climbs
 - [ ] **CON-02**: No back-to-back activities from the same similarity group within a day
 - [ ] **CON-03**: Walk distance penalties — penalize long transitions, favor one strategic long walk that positions for shorter subsequent walks
-- [ ] **CON-04**: Zone/location data driven from metadata CSV, not hard-coded
+- [x] **CON-04**: Zone/location data driven from metadata CSV, not hard-coded
 - [ ] **CON-05**: Cross-rotation value balancing — roughly equal overall quality between concurrent rotations
 
 ### UI
@@ -66,7 +66,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CON-01 | Phase 3 | Pending |
 | CON-02 | Phase 3 | Pending |
 | CON-03 | Phase 3 | Pending |
-| CON-04 | Phase 1 | Pending |
+| CON-04 | Phase 1 | Complete |
 | CON-05 | Phase 3 | Pending |
 | UI-01 | Phase 4 | Pending |
 | UI-02 | Phase 4 | Pending |
