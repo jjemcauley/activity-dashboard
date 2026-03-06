@@ -583,11 +583,13 @@ function validateLatinSquare(matrix) {
 
 export default function Generator() {
   const { registry, distMatrix, timeSlots, daySlices, similarities } = useDashboard();
-  const [rotations, setRotations] = useState([]); // array of { matrix, stats, validation }
+  const [results, setResults] = useState([]);              // { n, rotations: [{ matrix, stats, validation }] }[]
   const [generating, setGenerating] = useState(false);
   const [numGroups, setNumGroups] = useState(12);
-  const [numRotations, setNumRotations] = useState(2);
-  const [activeRotation, setActiveRotation] = useState(0);
+  const [activeN, setActiveN] = useState(1);               // selected N-count tab
+  const [activeRotation, setActiveRotation] = useState(0); // selected rotation within N
+  const [selectedSeason, setSelectedSeason] = useState(""); // "" = all activities
+  const [emptySeasonWarning, setEmptySeasonWarning] = useState(false);
 
   // Build activity list from registry
   const activities = useMemo(() => {
@@ -626,48 +628,67 @@ export default function Generator() {
   }, [activities]);
 
   const effectiveSlots = timeSlots.length;
-  const effectiveGroups = Math.min(numGroups, activities.length, effectiveSlots);
 
   // Generate handler
   const handleGenerate = useCallback(() => {
     setGenerating(true);
-    setRotations([]);
+    setResults([]);
+    setActiveN(1);
     setActiveRotation(0);
 
     setTimeout(() => {
-      const results = [];
+      const seasonPool = filterBySeason(activities, selectedSeason);
 
-      for (let r = 0; r < numRotations; r++) {
-        const matrix = generateRotation(
-          activities,
-          effectiveGroups,
-          effectiveSlots,
-          daySlices,
-          distMatrix,
-          registry.nameMap,
-          similarities,
-          r * 7919 // different seed per rotation
-        );
+      if (seasonPool.length === 0) {
+        setEmptySeasonWarning(true);
+        setGenerating(false);
+        return;
+      }
+      setEmptySeasonWarning(false);
 
-        if (matrix) {
-          const stats = computeStats(
-            matrix, daySlices, distMatrix, registry.nameMap, similarities
+      const maxN = Math.max(1, Math.floor(seasonPool.length / effectiveSlots));
+      const allResults = [];
+
+      for (let n = 1; n <= maxN; n++) {
+        const partitions = partitionActivities(seasonPool, n);
+        const rotationResults = [];
+
+        for (let r = 0; r < n; r++) {
+          const partition = partitions[r];
+          const effectiveGroupsForRotation = Math.min(numGroups, partition.length, effectiveSlots);
+
+          const matrix = generateRotation(
+            partition,
+            effectiveGroupsForRotation,
+            effectiveSlots,
+            daySlices,
+            distMatrix,
+            registry.nameMap,
+            similarities,
+            (n * 100003) + (r * 7919)
           );
-          const validation = validateLatinSquare(matrix);
-          results.push({ matrix, stats, validation });
+
+          if (matrix) {
+            const stats = computeStats(matrix, daySlices, distMatrix, registry.nameMap, similarities);
+            const validation = validateLatinSquare(matrix);
+            rotationResults.push({ matrix, stats, validation });
+          }
         }
+
+        allResults.push({ n, rotations: rotationResults });
       }
 
-      setRotations(results);
+      setResults(allResults);
       setGenerating(false);
     }, 50);
   }, [
-    activities, effectiveGroups, effectiveSlots, daySlices,
-    distMatrix, registry.nameMap, similarities, numRotations,
+    activities, selectedSeason, numGroups, timeSlots, daySlices,
+    distMatrix, registry.nameMap, similarities,
   ]);
 
   // Current rotation data
-  const current = rotations[activeRotation] || null;
+  const activeResultGroup = results.find(r => r.n === activeN) || null;
+  const current = activeResultGroup?.rotations[activeRotation] || null;
   const matrix = current?.matrix;
   const stats = current?.stats;
   const validation = current?.validation;
