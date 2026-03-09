@@ -1,6 +1,7 @@
 # Activity Dashboard
 
 A React-based scheduling tool for managing activity rotations across groups and time slots. Built for camp/event operations where groups rotate through activities across multiple days with constraints around walking distances, activity similarity, intensity balance, and staffing.
+dssadsadsas
 
 ## Quick Start
 
@@ -15,14 +16,14 @@ npm run preview   # Preview production build
 
 ### Tech Stack
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| UI Framework | React 18.2 | Component rendering with hooks |
-| Styling | Tailwind CSS v4 | Utility-first CSS with custom theme |
-| Build | Vite 5.1 | Dev server + production bundler |
-| CSV Parsing | PapaParse 5.4 | Parsing uploaded CSV files |
-| State | React hooks | useState, useMemo, useCallback, useEffect |
-| Persistence | localStorage | Client-side data persistence across reloads |
+| Layer        | Technology      | Purpose                                     |
+| ------------ | --------------- | ------------------------------------------- |
+| UI Framework | React 18.2      | Component rendering with hooks              |
+| Styling      | Tailwind CSS v4 | Utility-first CSS with custom theme         |
+| Build        | Vite 5.1        | Dev server + production bundler             |
+| CSV Parsing  | PapaParse 5.4   | Parsing uploaded CSV files                  |
+| State        | React hooks     | useState, useMemo, useCallback, useEffect   |
+| Persistence  | localStorage    | Client-side data persistence across reloads |
 
 ### Directory Structure
 
@@ -97,6 +98,7 @@ Components consume { registry, distMatrix, rotations, timeSlots, daySlices, ... 
 **Builder** -- Full interactive schedule editor with drag-drop from an activity palette, copy/paste with rectangular selection, cell grouping, per-rotation assignment constraints, cross-rotation validation, and comparison views against existing schedules.
 
 **Generator** -- Algorithmic schedule creation using greedy Latin square generation with:
+
 - Position multipliers (last slot of day/schedule boosted)
 - Similarity decay (diminishing returns for same-group activities)
 - Walk distance penalties (short/medium/long thresholds)
@@ -124,7 +126,7 @@ The dashboard expects CSV files exported from Google Sheets or similar:
 1. **Activity Metadata** -- Activity names with customer value ratings, intensity levels, location zones, indoor/outdoor classification, staffing requirements
 2. **Distance Matrix** -- Pairwise walking distances (meters) between activity locations, with optional `(start)` location rows
 3. **Schedule Matrix** -- Day/time headers with rotation sections containing group rows of activity assignments
-4. **Activity Similarities** *(optional)* -- Activity-to-group mappings for the generator's adjacency constraints
+4. **Activity Similarities** _(optional)_ -- Activity-to-group mappings for the generator's adjacency constraints
 
 Activity names are automatically reconciled across files using fuzzy matching (Levenshtein distance with configurable thresholds). The metadata file is the canonical name source. Mismatches are flagged in the Warnings panel.
 
